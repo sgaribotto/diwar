@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<?php require '../../../../resources/library/scripts.php'; ?>
+		
 		<?php require '../../../../resources/config.php'; ?>
+		<?php require LIBRARY_PATH . '/scripts.php'; ?>
 		
 		<?php 
-			
-			$mysqli = connection('db1');
-			print_r($mysqli);
+			print_r($config);
+			$mysqli = connection($config, 'db1');
 		?>
 	</head>
 		<body>
-
+		<div class='header'>
+			<!--<img src='<?php echo $config['paths']['images']['layout'] . "/diwar-logo.png"; ?>' />-->
+		</div>
 		<h2>PRESUPUESTO NUEVO</h2>
 		<div class='presupuesto-nuevo form-container'>
 			<form class='presupuesto-nuevo' method='post' acticion='emitirpresupuesto.php'>
@@ -26,7 +28,7 @@
 					<select readonly class='presupuesto-nuevo' name='cliente' />
 						<?php //TRAER LAS OPCIONES ?>
 					</select>
-					
+					<div class='test_ajax'>TODAVÌA NO</div>
 				</fieldset>
 			</form>
 		</div>
@@ -54,21 +56,23 @@
 			$(document).ready(function() {
 				
 				var actualizarTabla = function() {
-					formValues = $('form.filtros').serialize();
-					//console.log(formValues);
-					$('#tablaDatos').load("fuentes/AJAX.php?act=tablaDocentes", formValues, function(data) {
-						$('.botonEliminar').click(function() {
+					//var formValues = $('form.filtros').serialize();
+					var library_path = '<?php echo LIBRARY_PATH; ?>';
+					var url = "../../../../resources/library/AJAX.php?act=optionsArticulos"
+					console.log(url);
+					$('div.test_ajax').load(url, function() {
+						/*$('.botonEliminar').click(function() {
 							if (confirm('¿Desea Eliminar el docente? \n Podrá agregarlo nuevamente solo con el DNI')) {
 								var id = $(this).data('id');
 								$.post("./fuentes/AJAX.php?act=eliminarDocente", {"id":id, }, function(data) {
 									actualizarTabla();
 								});
 							}
-						});
+						});*/
 					});
 				} 
 				actualizarTabla();
-				
+				/*
 				$("#cargarDocenteNuevo").submit(function(event) {
 					event.preventDefault();
 					formValues = $("#cargarDocenteNuevo").serialize();
@@ -197,7 +201,7 @@
 					dateFormat:'yy-mm-dd',
 					yearRange:'c-80:c',
 					
-				});
+				});*/
 				
 			});
 		</script>

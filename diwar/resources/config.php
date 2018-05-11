@@ -28,10 +28,10 @@
 			"baseUrl" => "http://example.com"
 		),
 		"paths" => array(
-			"resources" => "/path/to/resources",
+			"resources" => realpath(dirname(__FILE__)),
 			"images" => array(
-				"content" => $_SERVER["DOCUMENT_ROOT"] . "/images/content",
-				"layout" => $_SERVER["DOCUMENT_ROOT"] . "/images/layout"
+				"content" => /*$_SERVER["DOCUMENT_ROOT"] . */"/diwar/public_html/img/content",
+				"layout" => /*$_SERVER["DOCUMENT_ROOT"] .*/"/diwar/public_html/img/layouts"
 			)
 		)
 	);
@@ -51,6 +51,7 @@
 		 
 	defined("TEMPLATES_PATH")
 		or define("TEMPLATES_PATH", realpath(dirname(__FILE__) . '/templates'));
+		
 	 
 	/*
 		Error reporting.
@@ -59,9 +60,9 @@
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
 	 
-	print_r($config);
-	function connection($db) {
-		$mysqli = new mysqli($config[$db]['host'], $config[$db]['username'], $config[$db]['password'], $config[$db]['dbname']);
+	print_r(realpath(dirname(__FILE__) . "/../public_html/img"));
+	function connection($config, $db) {
+		$mysqli = new mysqli($config['db'][$db]['host'], $config['db'][$db]['username'], $config['db'][$db]['password'], $config['db'][$db]['dbname']);
 		if ($mysqli->connect_errno) {
 			// La conexión falló. ¿Que vamos a hacer? 
 			// Se podría contactar con uno mismo (¿email?), registrar el error, mostrar una bonita página, etc.
