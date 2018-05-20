@@ -1,0 +1,59 @@
+label.presupuesto-nuevo, label.agregar-articulo {
+	display:inline-block;
+	font-weight: bold;
+	width: 96px;
+	margin: 5px;
+	padding: 5px;
+}
+
+input.presupuesto-nuevo {
+	width: 32px;
+	margin: 5px;
+	padding: 5px;
+}
+
+select.presupuesto-nuevo, select.agregar-articulo {
+	width: 160px;
+	margin: 5px;
+	padding: 5px;
+}
+
+table.presupuesto {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+td.cantidad, th, td.codigo {
+	text-align: center;
+	width: 8%;
+	padding: 2px;
+}
+
+td.detalle {
+	text-align: left;
+	width: 40%;
+	padding: 2px;
+}
+
+tr.articulos td {
+  border-bottom:1pt solid black;
+}
+
+div.header {
+	border-top: 6px solid #03a0db;
+	background-color: #f1f1f2;
+	position: relative;
+	z-index: 2;
+	padding: 0;
+	height: 48px;
+	display: block;
+	font-family: "Roboto", Helvetica, Arial, sans-serif;
+    font-size: 100%;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+img.logo {
+	height: 40px;
+	width: 170px;
+}
