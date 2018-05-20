@@ -1,4 +1,3 @@
-<?php //phpinfo(); ?>
 <?php
  
 	/*
@@ -60,7 +59,7 @@
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
 	 
-	print_r(realpath(dirname(__FILE__) . "/../public_html/img"));
+	//print_r(realpath(dirname(__FILE__) . "/../public_html/img"));
 	function connection($config, $db) {
 		$mysqli = new mysqli($config['db'][$db]['host'], $config['db'][$db]['username'], $config['db'][$db]['password'], $config['db'][$db]['dbname']);
 		if ($mysqli->connect_errno) {
