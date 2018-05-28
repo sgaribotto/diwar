@@ -5,6 +5,7 @@
 		<?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/config.php'; ?>
 		<?php require LIBRARY_PATH . '/scripts.php'; ?>
 		<link rel="stylesheet" type="text/css" href="../../../css/general.css">
+		
 	</head>
 		<body>
 		<div class="header">

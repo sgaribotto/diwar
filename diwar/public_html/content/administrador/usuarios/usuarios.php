@@ -1,5 +1,5 @@
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/header.php'; ?>
-<?php $maestros = ['modelos', 'mecanismos', 'variaciones', 'colores']; ?>
+<?php $maestros = ['usuarios']; ?>
 <h1>Maestros</h1>
 <select name='maestro' class='maestro'>
 	<?php

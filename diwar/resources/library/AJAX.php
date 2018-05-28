@@ -1,4 +1,5 @@
 <?php require '../config.php'; ?>
+<?php require 'funciones_tablas.php'; ?>
 <?php
 	//header('Content-Type: text/html; charset=utf-8');
 //Consultas vía AJAX
@@ -361,92 +362,39 @@
 					echo $mysqli->error;
 					break;
 					
-				/*case "eliminarMaestro":
-					$id = $_REQUEST['id'];
-					$query = "DELETE FROM presupuestos
-								WHERE id = $id";
-					$mysqli->query($query);
-					echo $query;
-					echo $mysqli->error;
-					break;*/
-					
 				case "actualizarFormularioMaestro":
 				
 					//print_r($_REQUEST);
 					$maestro = $mysqli->real_escape_string($_REQUEST['maestro']);
 					$id = $_REQUEST['id'];
 					
-					$query = "DESCRIBE {$maestro}";
-					$result = $mysqli->query($query);
-					$campos = array();
-					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-						$campos[$row['Field']] = $row;
-					}
 					
-					if ($id != 'nuevo') {
-						$query = "SELECT * FROM {$maestro} WHERE id = {$id}";
-						$result = $mysqli->query($query);
-						echo $mysqli->error;
-						//print_r($result);
-						$row = $result->fetch_array(MYSQLI_ASSOC);
-						
-						foreach ($row as $key => $value) {
-							$campos[$key]['Default'] = $value;
-						}
-						
-					}
+					armarFormulario($mysqli, $maestro, $id);
 					
-					//print_r($campos);
-					$excluir = ['id', 'en_uso'];
-					foreach ($campos as $key => $detalles) {
-						if (!in_array($detalles['Field'], $excluir)) {
-							switch ($detalles['Type']) {
-								case 'varchar(255)':
-									
-									echo "<label for='{$detalles['Field']}' class='text {$detalles['Field']}'>{$detalles['Field']}: </label>";
-									if ($detalles['Field'] != 'descripcion') {
-										echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' maxlength='255' type='text' />";
-									} else {
-										echo "<textarea name='{$detalles['Field']}' placeholder='descripción del producto...' maxlength='254'>{$detalles['Default']}</textarea>";
-									}
-									echo "<br />";
-									break;
-									
-								case 'double':
-								case 'int(11)':
-									echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$detalles['Field']}: </label>";
-									echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' maxlength='255' type='number'/>";
-									echo "<br />";
-									break;
-								
-								default:
-									echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$detalles['Field']}: </label>";
-									echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' type='text' />";
-									echo "<br />";
-									break;
-							}
-						}
-					}
+					break;
+				
+				case "actualizarFormularioSecundario":
+				
+					//print_r($_REQUEST);
+					$reference = $mysqli->real_escape_string($_REQUEST['reference']);
+					//$idMaestro = $_REQUEST['idMaestro'];
+					$tabla = $mysqli->real_escape_string($_REQUEST['tabla']);
+					$id = $_REQUEST['id'];
 					
-					$textoBoton = 'Agregar';
+					armarFormularioSecundario($mysqli, $tabla, $reference, $id);
 					
-					if ($id != 'nuevo') {
-						$textoBoton = "Modificar";
-					}
-					echo "<button type='submit' class='formulario submit agregarMaestro' data-id='{$id}'>{$textoBoton}</button>";
-							
 					break;
 					
 				case "actualizarTablaMaestro":
 					//print_r($_REQUEST);
 					$maestro = $mysqli->real_escape_string($_REQUEST['maestro']);
 					$filtro = $mysqli->real_escape_string($_REQUEST['filtro']);
-					
+					$en_uso = $mysqli->real_escape_string($_REQUEST['en_uso']);
 					
 					
 					$query = "SELECT *
 								FROM {$maestro}
-								WHERE en_uso = 1
+								WHERE en_uso >= {$en_uso}
 									AND (nombre LIKE '%{$filtro}%')
 								ORDER BY nombre, id";
 					$result = $mysqli->query($query);
@@ -496,6 +444,27 @@
 					echo "</table>";		
 					break;
 					
+				case "actualizarAutocompletar":
+					$maestro = $mysqli->real_escape_string($_REQUEST['maestro']);
+					$tipo = $mysqli->real_escape_string($_REQUEST['tipo']);
+					
+					$query = "SELECT DISTINCT {$tipo}
+								FROM {$maestro}
+								WHERE en_uso = 1
+								ORDER BY {$tipo};";
+					$result = $mysqli->query($query);
+					//echo $query;
+					//echo $mysqli->error;
+					$tipos = array();
+					if (!$mysqli->errno) {
+						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+							$tipos[] = $row['tipo'];
+						}
+						$tipos = json_encode($tipos);
+						echo $tipos;
+					}
+					break;
+					
 				case "agregarMaestro":
 					$campos = array();
 					$id = $_REQUEST['id'];
@@ -508,23 +477,78 @@
 						}
 					}
 					$maestro = $campos['maestro'];
-					$query = "REPLACE INTO {$maestro} SET ";
-					foreach ($campos as $campo => $valor) {
-						if (!in_array($campo, $excluir)) {
-							$query .= " {$campo} = '{$valor}', ";
+					
+					if ($id == 'nuevo') {
+						$query = "REPLACE INTO {$maestro} SET ";
+						foreach ($campos as $campo => $valor) {
+							if (!in_array($campo, $excluir)) {
+								$query .= " {$campo} = '{$valor}', ";
+							}
+						}
+						$query .= " en_uso = 1 ";
+						$mysqli->query($query);
+					
+						$id = $mysqli->insert_id;
+					} else {
+						$query = "UPDATE {$maestro} SET ";
+						foreach ($campos as $campo => $valor) {
+							if (!in_array($campo, $excluir)) {
+								$query .= " {$campo} = '{$valor}', ";
+							}
+						}
+						$query .= " en_uso = 1 ";
+						$query .= " WHERE id = {$id} ";
+						$mysqli->query($query);
+					}
+					
+					//echo $query;
+					//echo $mysqli->error;
+					
+					echo $id;
+					break;
+				case "agregarSecundario":
+					$campos = array();
+					$id = $_REQUEST['id'];
+					//print_r($_REQUEST);
+					$excluir = ['maestro', 'id', 'act', 'idMaestro', 'tabla', 'reference'];
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
 						}
 					}
+					$tabla = $campos['tabla'];
+					$maestro = $campos['maestro'];
+					$reference = $campos['reference'];
+					$idMaestro = $campos['idMaestro'];
 					
-					if ($id != 'nuevo') {
-						$query .= " id = {$id}, ";
-					}
-					$query .= " en_uso = 1";
-					//echo $query;
-					$mysqli->query($query);
 					if ($id == 'nuevo') {
+						$query = "INSERT INTO {$tabla} SET ";
+						foreach ($campos as $campo => $valor) {
+							if (!in_array($campo, $excluir)) {
+								$query .= " {$campo} = '{$valor}', ";
+							}
+						}
+						$query .= " en_uso = 1, ";
+						$query .= " {$reference} = {$idMaestro} ";
+						$mysqli->query($query);
+					
 						$id = $mysqli->insert_id;
+					} else {
+						$query = "UPDATE {$tabla} SET ";
+						foreach ($campos as $campo => $valor) {
+							if (!in_array($campo, $excluir)) {
+								$query .= " {$campo} = '{$valor}', ";
+							}
+						}
+						$query .= " en_uso = 1 ";
+						$query .= " WHERE id = {$id} ";
+						$mysqli->query($query);
 					}
 					
+					echo $query;
+					echo $mysqli->error;
 					
 					echo $id;
 					break;
@@ -535,11 +559,353 @@
 					$query = "UPDATE {$maestro} SET en_uso = 0 WHERE id = {$id}";
 					$mysqli->query($query);
 					break;
-				
-				
+					
+				case "actualizarTabla":
+					$campos = array();
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
+						}
+					}
+					//$id = $_REQUEST['id'];
+					//$excluir = ['maestro', 'id', 'act'];
+					
+					
+					
+					$tabla = $campos['tabla'];
+					switch($tabla) {
+						case 'clientes':
+							$where = '';
+							$filtro = $campos['filtro'];
+							if ($filtro != '') {
+								$where = " AND (nombre LIKE '%{$filtro}%' 
+										OR codigo_cliente LIKE '%{$filtro}%'
+										OR localidad LIKE '%{$filtro}%'
+										OR provincia LIKE '%{$filtro}%'
+										OR cuit LIKE '%{$filtro}%')";
+							}
+							$query = "SELECT id, codigo_cliente, cuit, nombre, localidad, provincia
+								FROM clientes
+								WHERE en_uso = {$campos['en_uso']} {$where}";
+							tablaListado($mysqli, $query, true, 'cliente.php', '');
+							break;
+						
+						case "vendedores":
+							$where = '';
+							$filtro = $campos['filtro'];
+							if ($filtro != '') {
+								$where = " AND (nombre LIKE '%{$filtro}%' 
+										OR codigo_cliente LIKE '%{$filtro}%'
+										OR localidad LIKE '%{$filtro}%'
+										OR provincia LIKE '%{$filtro}%'
+										OR cuit LIKE '%{$filtro}%')";
+							}
+							$query = "SELECT *
+								FROM {$tabla}
+								WHERE en_uso = {$campos['en_uso']}
+									{$where}";
+									
+							tablaListado($mysqli, $query, true, 'vendedor.php', '');
+							break;
+							
+						default:
+							$where = '';
+							$filtro = $campos['filtro'];
+							if ($filtro != '') {
+								$where = " AND (nombre LIKE '%{$filtro}%' 
+										OR codigo_cliente LIKE '%{$filtro}%'
+										OR localidad LIKE '%{$filtro}%'
+										OR provincia LIKE '%{$filtro}%'
+										OR cuit LIKE '%{$filtro}%')";
+							}
+							$query = "SELECT *
+								FROM {$tabla}
+								WHERE en_uso = {$campos['en_uso']}
+									{$where}";
+									
+							tablaListado($mysqli, $query, true, '', '');
+							break;
+						
+					}
+					break;
+					
+				case "eliminarElemento":
+					$campos = array();
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
+						}
+					}
+
+					$tabla = $campos['tabla'];
+					switch($tabla) {
+						case "clientes":
+							$query = "UPDATE clientes SET en_uso = 0 WHERE id = {$campos['id']}";
+							$mysqli->query($query);
+							break;
+						
+						default:
+							$query = "UPDATE {$tabla} SET en_uso = 0 WHERE id = {$campos['id']}";
+							$mysqli->query($query);
+							break;
+					}
+					break;
+					
+					case "actualizarFormulario":
+						$campos = array();
+						foreach($_REQUEST as $key => $value) {
+							if (is_string($value)) {
+								$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+							} else {
+								$campos[$key] = $value;
+							}
+						}
+						$tabla = $campos['tabla'];
+						
+						switch($tabla) {
+							case 'clientes':
+								$where = '';
+								$filtro = $campos['filtro'];
+								if ($filtro != '') {
+									$where = " AND (nombre LIKE '%{$filtro}%' 
+											OR codigo_cliente LIKE '%{$filtro}%'
+											OR localidad LIKE '%{$filtro}%'
+											OR provincia LIKE '%{$filtro}%'
+											OR cuit LIKE '%{$filtro}%')";
+								}
+								$query = "SELECT id, codigo_cliente, cuit, nombre, localidad, provincia
+									FROM clientes
+									WHERE en_uso = {$campos['en_uso']} {$where}";
+								tablaListado($mysqli, $query, true, 'cliente.php', false);
+								break;
+							
+						}
+					break;
+					
+				case "actualizarTablaSecundario":
+					//print_r($_REQUEST);
+					$campos = array();
+						foreach($_REQUEST as $key => $value) {
+							if (is_string($value)) {
+								$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+							} else {
+								$campos[$key] = $value;
+							}
+						}
+						$tabla = $campos['tabla'];
+						$reference = $campos['reference'];
+						$idMaestro = $campos['idMaestro'];
+						$en_uso = $campos['en_uso'];
+					$query = "SELECT *
+								FROM {$tabla}
+								WHERE {$reference} = {$idMaestro}
+									AND en_uso = {$en_uso}";
+					tablaListado($mysqli, $query, true, '', $tabla, $reference);
+					break;
+					
+				case "actualizarCheckboxes":
+					$campos = array();
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
+						}
+					}
+					$tabla = $campos['tabla'];
+					$tipo = $campos['tipo'];
+					$modeloConMecanismo = $campos['modeloConMecanismo'];
+					$modelo = $campos['modelo'];
+					
+					switch ($tabla) {
+						case "mecanismos":
+							$query = "SELECT DISTINCT m.id, m.nombre, IFNULL(mm.en_uso, 0) AS checked 
+										FROM mecanismos AS m
+										LEFT JOIN modelos_con_mecanismo AS mm
+											ON mm.mecanismo = m.id
+												AND mm.modelo = {$modelo}
+										WHERE m.en_uso = 1
+										ORDER BY m.nombre";
+							$result = $mysqli->query($query);
+							
+							while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+								$checked = '';
+								if ($row['checked'] == 1) {
+									$checked = 'checked';
+								}
+								echo "<input type='checkbox' value='{$row['id']}' data-mecanismo='{$row['id']}' data-tabla='mecanismos' 
+										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos'/>";
+								echo "<label for='mecanismo' class='checkbox'>{$row['nombre']}</label>";
+								echo "<br>";
+							}
+							
+							break;
+							
+						case "variaciones":
+							echo "<select class='modeloConMecanismo' name='modeloConMecanismo'>";
+							$query = "SELECT mm.id, m.nombre
+										FROM modelos_con_mecanismo AS mm
+										LEFT JOIN mecanismos AS m
+											ON mm.mecanismo = m.id
+										WHERE mm.modelo = {$modelo}
+											AND mm.en_uso = 1
+										ORDER BY m.nombre";
+										
+							//echo $query;
+							$result = $mysqli->query($query);
+							//echo $mysqli->error;
+							if ($result->num_rows) {
+								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+									if ($modeloConMecanismo == 'nulo') {
+										$modeloConMecanismo = $row['id'];
+									}
+									
+									$selected = '';
+									if ($row['id'] == $modeloConMecanismo) {
+										$selected = 'selected';
+									}
+									echo "<option value='{$row['id']}' {$selected}>{$row['nombre']}</option>";
+								}
+								echo "</select><br>";
+								
+								$query = "SELECT v.id, v.nombre, IFNULL(a.en_uso, 0) AS checked
+											FROM diwar.variaciones AS v
+											LEFT JOIN articulos AS a
+												ON a.variaciones = v.id
+													AND a.modelo_con_mecanismo = {$modeloConMecanismo}
+											WHERE v.tipo = '{$tipo}'
+											ORDER BY v.nombre";
+								$result = $mysqli->query($query);
+								
+								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+									$checked = '';
+									if ($row['checked'] == 1) {
+										$checked = 'checked';
+									}
+									echo "<input type='checkbox' value='{$row['id']}' data-variacion='{$row['id']}' data-tabla='variaciones' 
+											data-tipo='{$tipo}' {$checked} name='mecanismo' class='variaciones' 
+											data-modeloconmecanismo='{$modeloConMecanismo}' />";
+									echo "<label for='mecanismo' class='checkbox'>{$row['nombre']}</label>";
+									echo "<br>";
+								}
+							}
+							break;
+							
+						
+							
+						default:
+							echo "No se reconoce la tabla solicitada";
+							break;
+							
+					}
+						
+					break;
+					
+				case "actualizarModeloConMecanismo":
+					$campos = array();
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
+						}
+					}
+					$modelo = $campos['modelo'];
+					$mecanismo = $campos['mecanismo'];
+					$en_uso = $campos['en_uso'];
+					
+					$query = "SELECT id
+								FROM modelos_con_mecanismo
+								WHERE modelo = {$modelo}
+									AND mecanismo = {$mecanismo}";
+					$result = $mysqli->query($query);
+					
+					$id = false;
+					if ($result->num_rows) {
+						$id = $result->fetch_array(MYSQLI_ASSOC)['id'];
+					}
+					
+					
+					if ($id) {
+						$query = "UPDATE modelos_con_mecanismo
+									SET modelo = {$modelo},
+										mecanismo = {$mecanismo},
+										en_uso = {$en_uso}
+									WHERE id = {$id}";
+					} else {
+						$query = "INSERT INTO modelos_con_mecanismo
+									SET modelo = {$modelo},
+										mecanismo = {$mecanismo},
+										en_uso = {$en_uso}";
+					}
+					$mysqli->query($query);
+					//echo $query;
+					//echo $mysqli->error;
+					break;
+				case "actualizarVariacionesArticulo":
+					$campos = array();
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
+						}
+					}
+					$modeloConMecanismo = $campos['modeloConMecanismo'];
+					$variacion = $campos['variacion'];
+					$en_uso = $campos['en_uso'];
+					
+					$query = "SELECT id
+								FROM articulos
+								WHERE modelo_con_mecanismo = {$modeloConMecanismo}
+									AND variaciones = {$variacion}";
+					$result = $mysqli->query($query);
+					
+					$id = false;
+					if ($result->num_rows) {
+						$id = $result->fetch_array(MYSQLI_ASSOC)['id'];
+					}
+					
+					
+					if ($id) {
+						$query = "UPDATE articulos
+									SET modelo_con_mecanismo = {$modeloConMecanismo},
+										variaciones = {$variacion},
+										en_uso = {$en_uso}
+									WHERE id = {$id}";
+					} else {
+						$query = "INSERT INTO articulos
+									SET modelo_con_mecanismo = {$modeloConMecanismo},
+										variaciones = {$variacion},
+										en_uso = {$en_uso}";
+					}
+					$mysqli->query($query);
+					echo $query;
+					echo $mysqli->error;
+					break;
+
+				case "actualizarOptionsModelosConMecanismo":
+					$modelo = $_REQUEST['modelo'];
+					
+					$query = "SELECT mm.id, m.nombre
+								FROM modelos_con_mecanismo AS mm
+								LEFT JOIN mecanismos AS m
+									ON m.id = mm.mecanismo
+								WHERE mm.modelo = {$modelo}
+									AND mm.en_uso = 1
+								ORDER BY m.nombre";
+					$result = $mysqli->query($query);
+					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+						echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
+					}
+					break;
 				default:
 					echo "No se realizó la búsqueda";
-					
+					break;
 			}
 		$mysqli->close();
 	}
