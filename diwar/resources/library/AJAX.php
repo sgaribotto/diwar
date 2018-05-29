@@ -24,6 +24,36 @@
 					fwrite($errorLog, $log);
 					fclose($errorLog);
 					break;
+				
+				case "procesarIngreso":
+					$usuario = $mysqli->real_escape_string($_REQUEST['usuario']);
+					$clave = $mysqli->real_escape_string($_REQUEST['clave']);
+					
+					$query = "SELECT id, tipo, vendedor, usuario
+								FROM usuarios
+								WHERE usuario = '{$usuario}'
+									AND clave = MD5('{$clave}')
+									AND en_uso = 1;";
+					$result = $mysqli->query($query);
+					$data = array();
+					if ($result->num_rows == 1) {
+						$row = $result->fetch_array(MYSQLI_ASSOC);
+						session_start();
+						$_SESSION['usuario'] = $row['usuario'];
+						$_SESSION['id'] = $row['id'];
+						$_SESSION['tipo'] = $row['tipo'];
+						
+						$data['usuario'] = $row['usuario'];
+						$data['id'] = $row['id'];
+						$data['tipo'] = $row['tipo'];
+						//print_r($_SESSION);
+					} else {
+						$data['error'] =  "Usuario o contraseña incorrectos";
+					}
+					
+					$data = json_encode($data);
+					echo $data;
+					break;
 					
 				case "optionsmecanismo":
 					

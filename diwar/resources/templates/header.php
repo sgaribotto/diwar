@@ -4,6 +4,10 @@
 		<meta charset="utf-8">
 		<?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/config.php'; ?>
 		<?php require LIBRARY_PATH . '/scripts.php'; ?>
+		<?php
+			session_start();
+			print_r($_SESSION);
+		?>
 		<link rel="stylesheet" type="text/css" href="../../../css/general.css">
 		
 	</head>
