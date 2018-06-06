@@ -100,7 +100,8 @@
 				
 				<?php if ($emitido != 1 and $tipoUsuario == 'vendedor') { ?>
 				<br>
-				<button type='button' class='emitir presupuesto-nuevo'>Emitir presupuesto</button>
+				<button type='button' class='emitir presupuesto-nuevo jquibutton'>Emitir presupuesto</button>
+				<p class='errorEmision'></p>
 				<?php } else { 
 					
 				}
@@ -231,10 +232,12 @@
 						var url = "../../../../resources/library/AJAX.php?act=emitirPresupuesto";
 						var num = $('input.numero').val();
 						$.post(url, {"numero": num}, function(data) {
-							//console.log(data);
-							//actualizarTabla();
-							//$("#cargarDocenteNuevo")[0].reset();
-							location.assign('presupuestos.php');
+							data = JSON.parse(data);
+							if (data.error) {
+								$('p.errorEmision').text(data.error);
+							} else {
+								location.assign('../presupuestos');
+							}
 						});
 					});
 					

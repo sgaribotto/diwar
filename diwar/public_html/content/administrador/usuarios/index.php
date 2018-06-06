@@ -23,6 +23,8 @@
 				<input type='text' class='usuario nombre' name='nombre' required/>
 				<br>
 				<button type="submit" class="usuarios agregarUsuario" data-id='nuevo'>Agregar usuario</button>
+				
+				<button type="button" class="usuarios blanquearClave">Blanquear Clave</button>
 			</div>
 		</fieldset>
 	</form>
@@ -81,7 +83,7 @@
 					var id = $(this).data('id');
 					$.post("../../../../resources/library/AJAX.php?act=editarUsuario", {"id": id}, function(data) {
 						data = JSON.parse(data);
-						console.log(data.id);
+						//console.log(data.id);
 						$.each(data, function(key, value) {
 							$('input.' + key + ', select.' + key).val(value);
 						});
@@ -89,6 +91,14 @@
 						$('button.agregarUsuario').data('id', data.id)
 							.text('Modificar usuario');
 						//actualizarTablaMaestro(maestro, filtro);
+						
+						$('button.blanquearClave').show();
+						$('button.blanquearClave').data('id', data.id);
+							
+						$('button.blanquearClave').click(function() {
+							$.post("../../../../resources/library/AJAX.php?act=blanquearClave", {"id": id}, function(data) {
+							});
+						});
 					});
 				});
 				
@@ -149,6 +159,8 @@
 			var maestro = 'usuarios';
 			actualizarTablaMaestro(maestro, filtro);
 		});
+		
+		$('button.blanquearClave').hide();
 		
 				
 	});

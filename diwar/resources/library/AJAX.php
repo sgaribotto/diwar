@@ -439,56 +439,63 @@
 						$articulos[] = $row;
 					}
 					
-					
-					foreach ($articulos as $id => $detalles) {
-						$precio = 0;
-						
-						$query = "SELECT descripcion, precio
-									FROM modelos
-									WHERE id = {$detalles['modelo']};";
-						$result = $mysqli->query($query);
-						$row = $result->fetch_array(MYSQLI_ASSOC);
-						$precio += $row['precio'];
-						
-						$query = "SELECT descripcion, precio
-									FROM mecanismos
-									WHERE id = {$detalles['mecanismo']};";
-						
-						$result = $mysqli->query($query);
-						$row = $result->fetch_array(MYSQLI_ASSOC);
-						$precio += $row['precio'];
-						
-						if ($detalles['variaciones'] != '') {
-							$query = "SELECT descripcion, precio
-										FROM variaciones
-										WHERE id IN ({$detalles['variaciones']});";
-							$result = $mysqli->query($query);
+					if (count($articulos) > 0) {
+						foreach ($articulos as $id => $detalles) {
+							$precio = 0;
 							
-							while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-								if ($row['descripcion'] != '') {
-									$precio += $row['precio'];
+							$query = "SELECT descripcion, precio
+										FROM modelos
+										WHERE id = {$detalles['modelo']};";
+							$result = $mysqli->query($query);
+							$row = $result->fetch_array(MYSQLI_ASSOC);
+							$precio += $row['precio'];
+							
+							$query = "SELECT descripcion, precio
+										FROM mecanismos
+										WHERE id = {$detalles['mecanismo']};";
+							
+							$result = $mysqli->query($query);
+							$row = $result->fetch_array(MYSQLI_ASSOC);
+							$precio += $row['precio'];
+							
+							if ($detalles['variaciones'] != '') {
+								$query = "SELECT descripcion, precio
+											FROM variaciones
+											WHERE id IN ({$detalles['variaciones']});";
+								$result = $mysqli->query($query);
+								
+								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+									if ($row['descripcion'] != '') {
+										$precio += $row['precio'];
+									}
 								}
 							}
+							
+							$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
+							
+							$query = "UPDATE presupuestos SET
+										emitido = 1,
+										precio_a_la_emision = {$precio},
+										fecha_emision = CURRENT_TIMESTAMP
+									WHERE id = {$detalles['id']}";
+							$mysqli->query($query);
+							echo $mysqli->error;
+							
+							
 						}
-						
-						$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
-						
-						$query = "UPDATE presupuestos SET
-									emitido = 1,
-									precio_a_la_emision = {$precio},
-									fecha_emision = CURRENT_TIMESTAMP
-								WHERE id = {$detalles['id']}";
+						$query = "UPDATE datos_presupuesto SET
+										emitido = 1,
+										fecha_emision = CURRENT_TIMESTAMP
+									WHERE numero = {$numero}";
 						$mysqli->query($query);
-						echo $mysqli->error;
 						
-						
+						$data['exito'] = 1;
+						echo json_encode($data);
+					} else {
+						$data['error'] = "No se puede emitir un presupuesto sin artículos";
+						echo json_encode($data);
 					}
-					$query = "UPDATE datos_presupuesto SET
-									emitido = 1,
-									fecha_emision = CURRENT_TIMESTAMP
-								WHERE numero = {$numero}";
-					$mysqli->query($query);
-					echo $mysqli->error;
+					
 					break;
 					
 				case "eliminar-articulos-cargados":
@@ -692,8 +699,17 @@
 						$mysqli->query($query);
 					}
 					
-					echo $query;
-					echo $mysqli->error;
+					//echo $query;
+					//echo $mysqli->error;
+					
+					if (isset($campo['es_default'])) {
+						if ($campo['es_default'] == 'on') {
+							$query = "UPDATE {$tabla} SET
+										es_default = 1
+									WHERE id = {$id}";
+							$mysqli->query($query);
+						}
+					}
 					
 					echo $id;
 					break;
@@ -1204,6 +1220,15 @@
 					
 					$usuario = json_encode($usuario);
 					echo $usuario;
+					
+					break;
+				
+				case "blanquearClave":
+					$id = $_REQUEST['id'];
+					$query = "UPDATE usuarios
+								SET clave = MD5(usuario)
+								WHERE id = {$id}";
+					$mysqli->query($query);
 					
 					break;
 				
