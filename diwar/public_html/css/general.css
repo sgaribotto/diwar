@@ -39,6 +39,47 @@ tr.articulos td {
   border-bottom:1pt solid black;
 }
 
+label.presupuesto-nuevo, label.agregar-articulo {
+	display:inline-block;
+	font-weight: bold;
+	width: 96px;
+	margin: 5px;
+	padding: 5px;
+}
+
+input.presupuesto-nuevo {
+	width: 32px;
+	margin: 5px;
+	padding: 5px;
+}
+
+select.presupuesto-nuevo, select.agregar-articulo {
+	width: 160px;
+	margin: 5px;
+	padding: 5px;
+}
+
+table.presupuesto {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+td.cantidad, th, td.codigo {
+	text-align: center;
+	width: 8%;
+	padding: 2px;
+}
+
+td.detalle {
+	text-align: left;
+	width: 40%;
+	padding: 2px;
+}
+
+tr.articulos td {
+  border-bottom:1pt solid black;
+}
+
 div.header {
 	border-top: 6px solid #03a0db;
 	background-color: #f1f1f2;
@@ -57,3 +98,174 @@ img.logo {
 	height: 40px;
 	width: 170px;
 }
+
+nav.site-nav {
+	position: relative;
+	top: 0px;
+	z-index: 40;
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 20px;
+}
+
+img.logo {
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 20px;
+	margin-left: 5px;
+}
+
+.site-nav ul li {
+	display: inline-block;
+	padding: 0px;
+	margin: 0;
+}
+
+a.nav {
+	cursor: pointer;
+	text-decoration: none;
+	color: #03a0db;
+	padding: 5px;
+	
+}
+
+a.nav:hover {
+	background-color: #CCCCCC;
+}
+
+div.header {
+	background-color: #f1f1f2;
+	border-top: 3px solid #03a0db;
+	border-bottom: 3px solid #03a0db;
+	margin: 0;
+}
+
+body {
+	margin: 0;
+}
+
+div.menuNav  {
+	//display: inline-block;
+	border: 3px solid #03a0db;
+	width: 20%;
+	margin: auto;
+	margin-top: 30px;
+	padding: 10px;
+	background-color: #f1f1f2;
+	text-align: center;
+}
+
+div.menuNav a.nav {
+	font-size: 1.2em;
+}
+
+div.formulario  {
+	//display: inline-block;
+	border: 3px solid #03a0db;
+	margin-top: 30px;
+	padding: 10px;
+	background-color: #f1f1f2;
+}
+
+th.angosto, td.angosto {
+	width: 7%;
+	text-align: center;
+}
+
+th.fecha, td.fecha {
+	width: 7%;
+	text-align:center;
+}
+
+th.ancho, td.ancho {
+	width: 25%;
+	text-align: left;
+}
+
+th.muy-ancho, td.muy-ancho {
+	width: 45%;
+	text-align: left;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+th.presupuestos {
+	background-color: #f1f1f2;
+}	
+
+td.presupuestos {
+	border-bottom: 1px solid black;
+}
+
+h2 {
+	margin-bottom: 2px;
+	margin-top: 0;
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    color: #03a0db;
+    font-size: 2.188em;
+	background-color: #f1f1f2;
+}
+
+fieldset {
+	border:none;
+	padding: 0;
+	margin: 0;
+}
+
+label {
+	font-weight: bold;
+	width: 90px;
+	display: inline-block;
+	padding: 5px;
+	
+}
+
+input {
+	width: 220px;
+	padding: 5px;
+	border-radius: 3px;
+}
+
+select {
+	width: 230px;
+	padding: 5px;
+	border-radius: 3px;
+}
+
+textarea {
+	width: 328px;
+	height: 70px;
+	border-radius: 3px;
+}
+
+
+div.formulario {
+	border: 3px solid #03a0db;
+	margin-top: 30px;
+	padding: 10px;
+	background-color: #f1f1f2;
+}
+
+span.emitido {
+	display: inline-block;
+	width: 300px;
+}
+
+td.titulo {
+	font-weight: bold;
+	text-align: right;
+	padding: 3px;
+}
+
+td.importe {
+	text-align: right;
+}
+
+th {
+	background-color: #f1f1f2;
+}
+

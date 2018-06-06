@@ -19,10 +19,18 @@ function actualizarFormularioMaestro(maestro, id) {
 					source: data
 				});
 			}
+			
+			$('button').button();
 		});
 		
 		$('button.limpiar').click(function() {
 			$('select.maestro').change();
 		});
+		
+		
+	});
+	
+	$('form.filtros').submit(function(event) {
+		event.preventDefault();
 	});
 }

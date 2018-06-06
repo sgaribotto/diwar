@@ -20,8 +20,8 @@
 		echo "<table class='listado'>";
 		echo "<thead class='listado'><tr class='listado'>";
 		foreach ($headers as $header) {
-			if (!in_array($header, ['id', 'en_uso', $reference])) {
-				echo "<th class='listado'>" . strtoupper($header) . "</th>";
+			if (!in_array($header, ['id', 'en_uso', 'clave', $reference])) {
+				echo "<th class='listado {$header}'>" . ucfirst($header) . "</th>";
 			}
 		}
 		echo "</tr></thead>";
@@ -31,20 +31,20 @@
 			echo "<tr class='listado'>";
 			
 			foreach ($datos as $campo => $valor) {
-				if (!in_array($campo, ['id', 'en_uso', $reference])){
-					echo "<td class='listado'>{$valor}</td>";
+				if (!in_array($campo, ['id', 'en_uso', 'clave', $reference])){
+					echo "<td class='listado {$campo}'>{$valor}</td>";
 				}
 				
 				
 			}
 			
 			if ($eliminar) {
-				echo "<td class='listado'><button class='eliminarElemento' data-id='{$datos['id']}' data-tabla='{$editarInline}'>X</button></td>";
+				echo "<td class='listado eliminar'><button class='eliminarElemento eliminar' data-id='{$datos['id']}' data-tabla='{$editarInline}'>X</button></td>";
 			}
 			
 			if ($paginaEdicion != '') {
-				echo "<td class='listado'>";
-				echo "<a class='editarTR' href='{$paginaEdicion}?id={$datos['id']}' data-id='{$datos['id']}'>";
+				echo "<td class='listado editar'>";
+				echo "<a class='editarTR editar' href='{$paginaEdicion}?id={$datos['id']}' data-id='{$datos['id']}'>";
 				echo 'Editar';
 				echo '</a>';
 				echo "</td>";
@@ -89,7 +89,7 @@
 		}
 		
 		//print_r($campos);
-		$excluir = ['id', 'en_uso'];
+		$excluir = ['id', 'en_uso', 'clave'];
 		foreach ($campos as $key => $detalles) {
 			if (!in_array($detalles['Field'], $excluir)) {
 				$label = ucfirst(str_replace('_', ' ', $detalles['Field']));
@@ -100,7 +100,7 @@
 						if ($detalles['Field'] != 'descripcion') {
 						echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' maxlength='255' type='text' required />";
 						} else {
-							echo "<textarea name='{$detalles['Field']}' placeholder='descripción del producto...' maxlength='254' >{$detalles['Default']}</textarea>";
+							echo "<br><textarea name='{$detalles['Field']}' placeholder='descripción del producto...' maxlength='254' >{$detalles['Default']}</textarea>";
 						}
 						echo "<br />";
 						break;
@@ -145,7 +145,7 @@
 			$textoBoton = "Modificar";
 		}
 		echo "<button type='submit' class='formulario submit agregarMaestro' data-id='{$id}'>{$textoBoton}</button>";
-		echo "<button type='button' class='formulario limpiar'>Limpiar Formulario</button>";
+		echo "<button type='button' class='formulario limpiar'>Nuevo</button>";
 		
 		return 0;
 	}
@@ -236,5 +236,7 @@ function armarFormularioSecundario($mysqli, $tabla, $reference, $id = 'nuevo') {
 		echo "<button type='button' class='formulario limpiar'>Limpiar Formulario</button>";
 		
 		return 0;
-	}	
+	}
+
+
 ?>

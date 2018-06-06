@@ -1,10 +1,16 @@
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/header.php'; ?>
-<h1 class='ingreso'>Ingreso presupuestos DIWAR</h1>
-<div class="ingreso">
+<?php 
+	if (isset($_REQUEST['cerrar_sesion'])) {
+		$_SESSION = [];
+		echo "<script>location.assign('../public_html');</script>";
+	}
+?>
+<h2 class='ingreso'>Presupuestos</h2>
+<div class="ingreso menuNav">
 	<fieldset class="ingreso">
 		<legend class="ingreso">Ingrese Usuario y Contraseña</legend>
 		
-		<form method="post" action="../resources/library/BDIngreso.php" class="ingreso">
+		<form method="post" action="#" class="ingreso">
 			<!--<label class="ingreso" for="usuario">Usuario</label>-->
 			<input class="ingreso iconUser" name="usuario" type="text" placeholder="Usuario" value="" autofocus>
 			<br>

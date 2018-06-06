@@ -31,7 +31,9 @@
 			"images" => array(
 				"content" => /*$_SERVER["DOCUMENT_ROOT"] . */"/diwar/public_html/img/content",
 				"layout" => /*$_SERVER["DOCUMENT_ROOT"] .*/"/diwar/public_html/img/layouts"
-			)
+			),
+			"content" => "/diwar/public_html/content/",
+			"start" => "/diwar/public_html/index.php", //COPIAR PHP_SELF DEL INDEX
 		)
 	);
 	 

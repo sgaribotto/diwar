@@ -5,10 +5,10 @@
 //Consultas vía AJAX
 	//Autoload de la clase.
 	
-	//print_r($_SESSION);
+	//print_r($_REQUEST);
 	
 	if (isset($_GET['act'])) {
-			
+			session_start();
 			$mysqli = connection($config, 'db1');
 			switch($_GET['act']) {
 				
@@ -38,7 +38,7 @@
 					$data = array();
 					if ($result->num_rows == 1) {
 						$row = $result->fetch_array(MYSQLI_ASSOC);
-						session_start();
+						
 						$_SESSION['usuario'] = $row['usuario'];
 						$_SESSION['id'] = $row['id'];
 						$_SESSION['tipo'] = $row['tipo'];
@@ -53,6 +53,50 @@
 					
 					$data = json_encode($data);
 					echo $data;
+					break;
+					
+				case "cambiarClave":
+					
+					$claveActual = $mysqli->real_escape_string($_REQUEST['claveactual']);
+					$claveNueva = $mysqli->real_escape_string($_REQUEST['clavenueva']);
+					$claveNueva2 = $mysqli->real_escape_string($_REQUEST['clavenueva2']);
+					$id = $_SESSION['id'];
+					$data = array();
+					
+					if ($claveNueva != $claveNueva2) {
+						$data['error'] = "Las claves ingresadas no coinciden";
+					} else {
+					
+						$query = "SELECT id, tipo, vendedor, usuario
+									FROM usuarios
+									WHERE id = {$id}
+										AND clave = MD5('{$claveActual}')
+										AND en_uso = 1;";
+						$result = $mysqli->query($query);
+						$data = array();
+						if ($result->num_rows != 1) {
+							
+							$data['error'] = "La contraseña actual no coincide";
+							
+						} else {
+						
+						
+							$query = "UPDATE usuarios
+										SET clave = MD5('{$claveNueva}')
+										WHERE id = {$id};";
+							$mysqli->query($query);
+							echo $mysqli->error;
+							if (!$mysqli->error) {
+								$data['error'] = "Se ha cambiado la contraseña";
+							} else {
+								$data['error'] = "Error inesperado";
+							}
+						}
+					}
+					
+					$data = json_encode($data);
+					echo $data;
+					
 					break;
 					
 				case "optionsmecanismo":
@@ -122,7 +166,13 @@
 						echo "<select class='variaciones agregar-articulo variaciones-{$tipo} {$tipo}' name='{$tipo}' required>";
 						echo "<option value=''>Seleccione {$tipo}...</option>";
 						foreach ($options as $id => $nombre) {
-							echo "<option value='{$id}'>{$nombre}</option>";
+							$selected = '';
+							$cuenta = count($variaciones[$tipo]);
+							if ($cuenta == 1) {
+								
+								$selected = 'selected';
+							}
+							echo "<option value='{$id}' {$selected}>{$nombre}</option>";
 						}
 						
 							
@@ -192,13 +242,13 @@
 										
 					
 					$query = "INSERT INTO presupuestos
-								(variaciones, articulo, numero, cliente, vendedor, cantidad, color_tapizado, color_red, color_casco, descuento_articulo) VALUES
-								('{$variaciones}', '{$informacion['mecanismo']}', '{$informacion['numero']}', '{$informacion['cliente']}',
-									'{$informacion['vendedor']}', '{$informacion['cantidad']}', {$informacion['color-tapizado']}, 
+								(variaciones, articulo, numero, cantidad, color_tapizado, color_red, color_casco, descuento_articulo) VALUES
+								('{$variaciones}', '{$informacion['mecanismo']}', '{$informacion['numero']}', 
+									'{$informacion['cantidad']}', {$informacion['color-tapizado']}, 
 									{$informacion['color-red']}, {$informacion['color-casco']}, '{$informacion['descuento_articulo']}')";
 					
 					$mysqli->query($query);
-					echo $query;
+					//echo $query;
 					echo "<br>";
 					echo $mysqli->error;
 					
@@ -300,15 +350,65 @@
 						echo "<td class='articulos codigo'>{$detalles['codigo_articulo']}</td>";
 						echo "<td class='articulos detalle'>{$detalle}</td>";
 						echo "<td class='articulos cantidad'>{$detalles['cantidad']}</td>";
-						echo "<td class='articulos cantidad'>{$detalles['descuento_articulo']}</td>";
-						echo "<td class='articulos precio'>{$precio}</td>";
+						echo "<td class='articulos cantidad'>{$detalles['descuento_articulo']} %</td>";
+						echo "<td class='articulos precio importe'>$ {$precio}</td>";
 						if ($detalles['emitido'] == 0) {
 							echo "<td class='articulos'><button type='button' class='botonEliminar' data-id='{$detalles['id']}'>X</button></td>";
 						}
 						echo "</tr>";
 						
 					}
-					echo "</tbody>";
+					
+					//$numero = $_REQUEST['numero'];
+					$query = "SELECT SUM(p.precio_a_la_emision) AS subtotal,
+								dp.embalaje, dp.descuento, dp.iva
+							FROM datos_presupuesto AS dp
+							LEFT JOIN presupuestos AS p
+								ON p.numero = dp.numero
+							WHERE dp.numero = {$numero}
+							GROUP BY dp.numero";
+					$result = $mysqli->query($query);
+					
+					$row = $result->fetch_array();
+					
+					$subtotal = round($row['subtotal'], 2);
+					echo "<tr>";
+					echo "<td colspan='2' class='subtotales blanco'></td>";
+					echo "<td colspan='2' class='subtotales titulo'>Subtotal</td>";
+					echo "<td class='importe subtotales'> $ {$subtotal}</td>";
+					echo "</tr>";
+					$embalaje = round($row['subtotal'] * $row['embalaje'] / 100, 2);
+					echo "<tr>";
+					echo "<td colspan='2' class='subtotales blanco'></td>";
+					echo "<td colspan='2' class='subtotales titulo'>Embalaje {$row['embalaje']} %</td>";
+					
+					echo "<td class='importe subtotales'> $ {$embalaje}</td>";
+					echo "</tr>";
+					echo "<tr>";
+					$descuento = round((-1) * $row['subtotal']* $row['descuento'] / 100, 2);
+					echo "<td colspan='2' class='subtotales blanco'></td>";
+					echo "<td colspan='2' class='subtotales titulo'>Descuento {$row['descuento']} %</td>";
+					echo "<td class='importe subtotales'> $ {$descuento}</td>";
+					$subtotal = $subtotal + $embalaje + $descuento;
+					echo "</tr>";
+					echo "<tr>";
+					echo "<td colspan='2' class='subtotales blanco'></td>";
+					echo "<td colspan='2' class='subtotales titulo'>Subtotal</td>";
+					echo "<td class='importe subtotales'> $ {$subtotal}</td>";
+					$iva =round($subtotal * $row['iva'] / 100, 2);
+					echo "</tr>";
+					echo "<tr>";
+					echo "<td colspan='2' class='subtotales blanco'></td>";
+					echo "<td colspan='2' class='subtotales titulo'>IVA {$row['iva']} %</td>";
+					echo "<td class='importe subtotales'> $ {$iva}</td>";
+					$total = $subtotal + $iva;
+					echo "</tr>";
+					echo "<tr>";
+					echo "<td colspan='2' class='subtotales blanco'></td>";
+					echo "<td colspan='2' class='subtotales titulo'>Total</td>";
+					echo "<td class='importe subtotales'> $ {$total}</td>";
+					echo "</tr>";
+						echo "</tbody>";
 					echo "</table>";
 					
 					break;
@@ -380,7 +480,15 @@
 								WHERE id = {$detalles['id']}";
 						$mysqli->query($query);
 						echo $mysqli->error;
+						
+						
 					}
+					$query = "UPDATE datos_presupuesto SET
+									emitido = 1,
+									fecha_emision = CURRENT_TIMESTAMP
+								WHERE numero = {$numero}";
+					$mysqli->query($query);
+					echo $mysqli->error;
 					break;
 					
 				case "eliminar-articulos-cargados":
@@ -421,14 +529,21 @@
 					$filtro = $mysqli->real_escape_string($_REQUEST['filtro']);
 					$en_uso = $mysqli->real_escape_string($_REQUEST['en_uso']);
 					
-					
+					$campoFiltrado = 'nombre';
+					if (in_array($maestro, ['variaciones', 'colores', 'modelos'])) {
+						$campoFiltrado = "CONCAT(IFNULL(tipo, ''), IFNULL(nombre, ''))";
+					}
+					if ($maestro == 'usuarios') {
+						$campoFiltrado = "CONCAT(IFNULL(tipo, ''), IFNULL(nombre, ''), IFNULL(usuario, ''))";
+					}
 					$query = "SELECT *
 								FROM {$maestro}
 								WHERE en_uso >= {$en_uso}
-									AND (nombre LIKE '%{$filtro}%')
+									AND {$campoFiltrado} LIKE '%{$filtro}%'
 								ORDER BY nombre, id";
 					$result = $mysqli->query($query);
 					//echo $query;
+					//echo $mysqli->error;
 					$campos = array();
 					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 						foreach ($row as $key => $value) {
@@ -443,17 +558,17 @@
 					echo "<tr class='{$maestro} maestro datos'>";
 					echo "<th class='{$maestro} maestro datos editar'>Editar</th>";
 					//print_r($campos);
-					$excluir = ['id', 'en_uso'];
+					$excluir = ['id', 'en_uso', 'clave'];
 					foreach ($campos as $id => $detalles) {
 						foreach ($detalles as $key => $value) {
 							if (!in_array($key, $excluir)) {
-								echo "<th class='{$maestro} maestro datos'>{$key}</th>";
+								echo "<th class='{$maestro} maestro datos {$key}'>" .ucfirst($key) . "</th>";
 							}
 						}
 						break;
 					}
 					echo "<th class='{$maestro} maestro datos eliminar'>Eliminar</th>";
-					echo "</tr>";
+					echo "</tr></thead><tbody>";
 					
 					foreach ($campos as $id => $detalles) {
 						echo "<tr class='{$maestro} maestro datos'>";
@@ -590,6 +705,94 @@
 					$mysqli->query($query);
 					break;
 					
+				case "actualizarTablaPresupuestos":
+					echo "<table>
+						<tr>
+							<th class='presupuestos angosto'>Número</th>";
+						if ($_SESSION['tipo'] != 'vendedor') { 
+							echo "<th class='presupuestos ancho'>Vendedor</th>";
+						}
+						echo "<th class='presupuestos ancho'>Cliente</th>
+							<th class='presupuestos angosto'>Cantidad de artículos</th>
+							<th class='presupuestos angosto'>Importe emitido</th>
+							<th class='presupuestos fecha'>Fecha de emisión</th>
+							<th class='presupuestos angosto'>Emitido</th>
+						</tr>";
+						
+						$fechaDesde = $mysqli->real_escape_string($_REQUEST['fechaDesde']);
+						$fechaHasta = $mysqli->real_escape_string($_REQUEST['fechaHasta']);
+						$filtro = $mysqli->real_escape_string($_REQUEST['filtro']);
+						
+						/*$fechaDesde = DateTime::createFromFormat('d/m/Y', $fechaDesde);
+						$fechaHasta = DateTime::createFromFormat('d/m/Y', $fechaHasta);
+						$fechaDesde = date_format($fechaDesde,"Y/m/d");
+						$fechaHasta = date_format($fechaHasta,"Y/m/d");*/
+						
+						$where = ' WHERE dp.emitido = 1 ';
+						if ($_SESSION['tipo'] == 'vendedor') {
+							$query = "SELECT vendedor
+										FROM usuarios
+										WHERE id = {$_SESSION['id']}";
+							$result = $mysqli->query($query);
+							$vendedor = $result->fetch_array()['vendedor'];
+							$where = " WHERE dp.vendedor = {$vendedor} ";
+						}
+						
+						if ($fechaDesde != '') {
+							$where .= " AND dp.fecha_emision >= '{$fechaDesde}' ";
+						}
+						if ($fechaHasta != '') {
+							$where .= " AND dp.fecha_emision <= '{$fechaHasta}' ";
+						}
+						
+						if ($filtro != '') {
+							if ($_SESSION['tipo'] != 'vendedor') {
+								$where .= " AND CONCAT(v.nombre, c.nombre) LIKE '%{$filtro}%' ";
+							} else {
+								$where .= " AND c.nombre LIKE '%{$filtro}%' ";
+							}
+						}
+						
+						
+						$query = "SELECT dp.numero, v.nombre AS vendedor, c.nombre AS cliente,
+									COUNT(p.articulo) AS cantidad_articulos, 
+									SUM(p.precio_a_la_emision) AS precio_total,
+									dp.fecha_emision, IF(dp.emitido = 1, 'Sí', 'No') AS emitido
+								FROM datos_presupuesto AS dp
+								LEFT JOIN presupuestos As p
+									ON dp.numero = p.numero
+								LEFT JOIN vendedores AS v
+									ON v.id = dp.vendedor
+								LEFT JOIN clientes AS c
+									ON c.id = dp.cliente
+									{$where}
+								GROUP BY dp.numero
+								ORDER BY dp.numero DESC";
+						$result = $mysqli->query($query);
+						//print_r($_SESSION);
+						/*echo $query;
+						echo '<br>';
+						echo $mysqli->error;*/
+						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+							echo "<tr>
+									<td class='presupuestos cantidad'><a href='presupuesto.php?num={$row['numero']}' class='jquibutton'>{$row['numero']}</a></td>";
+							if ($_SESSION['tipo'] != 'vendedor') { 
+								echo "<td class='presupuestos'>{$row['vendedor']}</td>";
+							}
+							echo "<td class='presupuestos'>{$row['cliente']}</td>
+									<td class='presupuestos cantidad'>{$row['cantidad_articulos']}</td>
+									<td class='presupuestos cantidad'>{$row['precio_total']}</td>
+									<td class='presupuestos'>{$row['fecha_emision']}</td>
+									<td class='presupuestos cantidad'>";
+								if ($row['emitido'] != 'No') {
+									echo "<a href='presupuestoPDF.php?num={$row['numero']}' target='_blank' class='jquibutton'>PDF</a>";
+								}
+								echo "</td>
+								</tr>";
+						}
+					
+					break;
+					
 				case "actualizarTabla":
 					$campos = array();
 					foreach($_REQUEST as $key => $value) {
@@ -627,16 +830,16 @@
 							$filtro = $campos['filtro'];
 							if ($filtro != '') {
 								$where = " AND (nombre LIKE '%{$filtro}%' 
-										OR codigo_cliente LIKE '%{$filtro}%'
 										OR localidad LIKE '%{$filtro}%'
-										OR provincia LIKE '%{$filtro}%'
-										OR cuit LIKE '%{$filtro}%')";
+										OR provincia LIKE '%{$filtro}%')";
 							}
 							$query = "SELECT *
 								FROM {$tabla}
 								WHERE en_uso = {$campos['en_uso']}
 									{$where}";
-									
+							
+							//echo $query;
+							//echo $mysqli->error;							
 							tablaListado($mysqli, $query, true, 'vendedor.php', '');
 							break;
 							
@@ -768,8 +971,8 @@
 									$checked = 'checked';
 								}
 								echo "<input type='checkbox' value='{$row['id']}' data-mecanismo='{$row['id']}' data-tabla='mecanismos' 
-										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos'/>";
-								echo "<label for='mecanismo' class='checkbox'>{$row['nombre']}</label>";
+										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos' style='width: 10px;'/>";
+								echo "<label for='mecanismo' class='checkbox' style='width: 200px;'>{$row['nombre']}</label>";
 								echo "<br>";
 							}
 							
@@ -818,8 +1021,8 @@
 									}
 									echo "<input type='checkbox' value='{$row['id']}' data-variacion='{$row['id']}' data-tabla='variaciones' 
 											data-tipo='{$tipo}' {$checked} name='mecanismo' class='variaciones' 
-											data-modeloconmecanismo='{$modeloConMecanismo}' />";
-									echo "<label for='mecanismo' class='checkbox'>{$row['nombre']}</label>";
+											data-modeloconmecanismo='{$modeloConMecanismo}' style='width: 10px;'/>";
+									echo "<label for='mecanismo' class='checkbox' style='width: 200px;'>{$row['nombre']}</label>";
 									echo "<br>";
 								}
 							}
@@ -933,6 +1136,353 @@
 						echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
 					}
 					break;
+					
+				case "actualizarOptionsVendedor":
+					$tipo = $mysqli->real_escape_string($_REQUEST['tipo']);
+					
+					echo "<option value=''>Seleccione vendedor...</option>";
+					if ($tipo == 'vendedor') {
+						$query = "SELECT id, nombre
+									FROM vendedores
+									WHERE en_uso = 1";
+						$result = $mysqli->query($query);
+						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+							echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
+						}
+					}	
+					break;
+				
+				case "actualizarNombreVendedor":
+					$vendedor = $_REQUEST['vendedor'];
+					
+					if ($vendedor != '') {
+						$query = "SELECT nombre
+									FROM vendedores
+									WHERE id = {$vendedor}";
+						$result = $mysqli->query($query);
+						echo $result->fetch_array()['nombre'];
+					} else {
+						echo "";
+					}
+					break;
+					
+				case "agregarUsuario":
+					$tipo = $mysqli->real_escape_string($_REQUEST['tipo']);
+					$usuario = $mysqli->real_escape_string($_REQUEST['usuario']);
+					$nombre = $mysqli->real_escape_string($_REQUEST['nombre']);
+					$id = $_REQUEST['id'];
+					$vendedor = $_REQUEST['vendedor'];
+					
+					if ($id == 'nuevo') {
+						$query = "INSERT INTO usuarios
+									SET tipo = '{$tipo}',
+										usuario = '{$usuario}',
+										clave = MD5('{$usuario}'),
+										nombre = '{$nombre}',
+										vendedor = '{$vendedor}';";
+						$mysqli->query($query);
+					} else {
+						$query = "UPDATE usuarios
+									SET tipo = '{$tipo}', 
+									usuario = '{$usuario}',
+										nombre = '{$nombre}',
+										vendedor = '{$vendedor}',
+										en_uso = 1
+										
+									WHERE id = {$id}";
+						$mysqli->query($query);
+					}
+					break;
+					
+				case "editarUsuario":
+					$id = $_REQUEST['id'];
+					$query = "SELECT id, tipo, usuario, nombre, vendedor
+								FROM usuarios
+								WHERE id = {$id}";
+					$result = $mysqli->query($query);
+					$usuario = $result->fetch_array();
+					
+					$usuario = json_encode($usuario);
+					echo $usuario;
+					
+					break;
+				
+				case "optionsDatosPresupuesto":
+					$campo = $mysqli->real_escape_string($_REQUEST['campo']);
+					$vendedor = $_REQUEST['vendedor'];
+					$cambioCliente = $_REQUEST['cambioCliente'];
+					$numero = $_REQUEST['numero'];
+					
+					$query = "SELECT cliente, vendedor, direccion_entrega,
+								iva, tipo_factura, descuento, embalaje,
+								observaciones, condicion, emitido
+							FROM datos_presupuesto
+							WHERE numero = {$numero}";
+					//echo $query;		
+					$result = $mysqli->query($query);
+					$datosPresupuesto = $result->fetch_array(MYSQLI_ASSOC);
+					$cliente = $datosPresupuesto['cliente'];
+					$emitido = $datosPresupuesto['emitido'];
+					$cambiar = false;
+					if ($cambioCliente and $cambioCliente != $cliente) {
+						$cliente = $cambioCliente;
+						$cambiar = true;
+					}
+					
+					switch ($campo) {
+						case "clientes":
+							echo "<label class='presupuesto-nuevo' for='cliente'>Cliente: </label>";
+							if (!$emitido) {
+								echo "<select class='presupuesto clientes' name='clientes'>";
+								echo "<option value=''>Seleccione cliente</option>";
+								$query = "SELECT c.id, c.nombre
+									FROM clientes AS c
+									LEFT JOIN clientes_vendedores AS v
+										ON v.cliente = c.id
+									WHERE c.en_uso = 1
+										AND v.en_uso = 1 
+										AND v.vendedor = {$vendedor}";
+								echo $query;
+								$result = $mysqli->query($query);
+								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+									$selected = '';
+									if ($row['id'] == $datosPresupuesto['cliente']) {
+										$selected = 'selected';
+									}
+									echo "<option value='{$row['id']}' {$selected}>{$row['nombre']}</option>";
+								}
+								echo "</select>";
+							} else {
+								
+								$query = "SELECT nombre
+											FROM clientes
+											WHERE id = {$datosPresupuesto['cliente']}";
+								$result = $mysqli->query($query);
+								$datoEmitido = $result->fetch_array()['nombre'];
+								echo "<span class='emitido'>{$datoEmitido}</span>";
+							}
+							break;
+						
+						case "datos_presupuesto":
+							//GUARDAR EL CAMBIO DE CLIENTE
+							if ($cambiar) {
+								$query = "REPLACE INTO datos_presupuesto
+											SET CLIENTE = {$cliente},
+												vendedor = {$vendedor},
+												numero = {$numero}";
+								$mysqli->query($query);
+							}									
+							//TRAER LOS OPTIONS DE LOS DATOS
+							
+							echo "<br>";
+							echo "<label class='presupuesto-nuevo' for='direccionEntrega'>Dirección de entrega: </label>";
+							if (!$emitido) {
+								echo "<select class='presupuesto datos-presupuesto' name='direccionEntrega' data-campo='direccion_entrega'>";
+								$query = "SELECT id, direccion, es_default
+											FROM direcciones_entrega
+											WHERE en_uso = 1
+												AND cliente = {$cliente}";
+								//echo $query;
+								print_r($datosPresupuesto);
+								$result = $mysqli->query($query);
+								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+									$selected = '';
+									if ($datosPresupuesto['direccion_entrega'] == '') {
+										if ($row['es_default'] == 1) {
+											$selected = 'selected';
+										}
+									} else {
+										if ($row['id'] == $datosPresupuesto['direccion_entrega']) {
+											$selected = 'selected';
+										}
+									}
+									echo "<option value='{$row['id']}' {$selected}>{$row['direccion']}</option>";
+								}
+								echo "</select>";
+							} else {
+								$datoEmitido = '';
+								if ($datosPresupuesto['direccion_entrega'] != '') {
+									$query = "SELECT direccion, codigo_postal, localidad, provincia
+												FROM direcciones_entrega
+												WHERE id = {$datosPresupuesto['direccion_entrega']}";
+												
+									$result = $mysqli->query($query);
+									//echo $query;
+									//echo $mysqli->error;
+									$row = $result->fetch_array();
+									
+									$datoEmitido = $row['direccion'] . "<br>" .  $row['codigo_postal'] . $row['localidad'] ."<br>" . $row['provincia'];
+								} 
+								echo "<span class='emitido'>{$datoEmitido}</span>";
+							}
+
+							
+							$query = "SELECT iva, tipo_factura
+										FROM clientes
+										WHERE id = {$cliente}";
+							$result = $mysqli->query($query);
+							$row = $result->fetch_array(MYSQLI_ASSOC);
+							$iva = $row['iva'];
+							$tipoFactura = $row['tipo_factura'];
+							//echo "<br>";
+							echo "<label class='presupuesto-nuevo' for='iva'>IVA: </label>";
+							if (!$emitido) {
+								echo "<select class='presupuesto datos-presupuesto' name='iva' data-campo='iva'>";
+								foreach ([21, 10.5, 0] as $tipoIva) {
+									$selected = '';
+									if ($datosPresupuesto['iva'] == '') {
+										if ($iva == $tipoIva) {
+											$selected = 'selected';
+										}
+									} else {
+										if ($tipoIva== $datosPresupuesto['iva']) {
+											$selected = 'selected';
+										}
+									}
+										
+									echo "<option value='{$tipoIva}' {$selected}>{$tipoIva} %</option>";
+								}
+								echo "</select>";
+							} else {
+								$datoEmitido = $datosPresupuesto['iva'];
+									
+								echo "<span class='emitido'>{$datoEmitido}%</span>";
+							}
+								
+							echo "<label class='presupuesto-nuevo datos-presupuesto' for='tipoFactura'>Tipo de factura: </label>";
+							if (!$emitido) {
+							echo "<select class='presupuesto datos-presupuesto' name='tipoFactura' data-campo='tipo_factura'>";
+								foreach (['A', 'B', 'C', 'Otro'] as $factura) {
+									$selected = '';
+									
+									if ($datosPresupuesto['tipo_factura'] == '') {
+										if ($tipoFactura == $factura) {
+											$selected = 'selected';
+										}
+									} else {
+										if ($tipoFactura == $datosPresupuesto['tipo_factura']) {
+											$selected = 'selected';
+										}
+									}
+								echo "<option value='{$factura}' {$selected}>{$factura}</option>";
+								}
+								echo "</select>";
+							} else {
+								$datoEmitido = $datosPresupuesto['tipo_factura'];
+									
+								echo "<span class='emitido'>{$datoEmitido}</span>";
+							}
+							
+							echo "<br>";
+							echo "<label class='presupuesto-nuevo ' for='embalaje'>Embalaje: </label>";
+							if (!$emitido) {
+							echo "<select class='presupuesto datos-presupuesto' name='embalaje' data-campo='embalaje'>";
+								foreach (['0', '5', '8'] as $valor) {
+									$selected = "";
+									if ($valor == $datosPresupuesto['embalaje']) {
+										$selected = 'selected';
+									}
+									
+									echo "<option value='{$valor}' {$selected}>{$valor}%</option>";
+								}
+								echo "</select>";
+							} else {
+								$datoEmitido = $datosPresupuesto['embalaje'];
+									
+								echo "<span class='emitido'>{$datoEmitido}%</span>";
+							}
+							
+							echo "<label class='presupuesto-nuevo' for='descuento'>Descuento: </label>";
+							if (!$emitido) {
+								echo "<input type='number' class='presupuesto datos-presupuesto' name='descuento' 
+									data-campo='descuento' min='0' max='100' value='{$datosPresupuesto['descuento']}'>%";
+							} else {
+								$datoEmitido = $datosPresupuesto['descuento'];
+									
+								echo "<span class='emitido'>{$datoEmitido}%</span>";
+							}
+							
+							//echo "<br>";
+							echo "<label class='presupuesto-nuevo' for='condicion'>Condición venta: </label>";
+							if (!$emitido) {
+								echo "<select class='presupuesto datos-presupuesto' name='condicion' data-campo='condicion'>";
+								foreach (['Contado', 'Seña 30% y saldo contraentrega.', 'Seña 50% y saldo contraentrega.', 'Seña 70% y saldo contraentrega.', 'Otro. (Aclarar en observaciones)'] as $valor) {
+									$selected = "";
+									if ($valor == $datosPresupuesto['condicion']) {
+										$selected = 'selected';
+									}								
+									echo "<option value='{$valor}' {$selected} >{$valor}</option>";
+								}
+								echo "</select>";
+							} else {
+								$datoEmitido = $datosPresupuesto['condicion'];
+									
+								echo "<span class='emitido'>{$datoEmitido}</span>";
+							}
+							
+							echo "<br>";
+							echo "<label class='presupuesto-nuevo' for='observaciones'>Observaciones: </label>";
+							if (!$emitido) {
+								echo "<textarea class='presupuesto-nuevo datos-presupuesto' name='observaciones' data-campo='observaciones'>{$datosPresupuesto['observaciones']}</textarea>";
+							} else {
+								$datoEmitido = $datosPresupuesto['observaciones'];
+									
+								echo "<span class='emitido'>{$datoEmitido}</span>";
+							}
+							break;
+						
+							
+							
+						
+					}
+					break;
+					
+				case "actualizarDatosPresupuesto":
+					$campo = $mysqli->real_escape_string($_REQUEST['campo']);
+					$valor = $mysqli->real_escape_string($_REQUEST['valor']);
+					$numero = $_REQUEST['numero'];
+					
+					$query = "UPDATE datos_presupuesto SET
+								{$campo} = '{$valor}'
+								WHERE numero = {$numero}";
+					$mysqli->query($query);
+					echo $mysqli->error;
+					echo $query;
+					break;
+					
+				case "actualizarTotalesPresupuesto":
+					$numero = $_REQUEST['numero'];
+					$query = "SELECT SUM(p.precio_a_la_emision) AS subtotal,
+								dp.embalaje, dp.descuento, dp.iva
+							FROM datos_presupuesto AS dp
+							LEFT JOIN presupuestos AS p
+								ON p.numero = dp.numero
+							WHERE dp.numero = {$numero}
+							GROUP BY dp.numero";
+					$result = $mysqli->query($query);
+					
+					$row = $result->fetch_array();
+					
+					$subtotal = round($row['subtotal'], 2);
+					echo "<label class='subtotal' for=''>Subtotal</label>";
+					echo "<span class='totales subtotal'> $ {$subtotal}</span><br>";
+					$embalaje = round($row['subtotal'] * $row['embalaje'] / 100, 2);
+					echo "<label class='subtotal' for=''>Embalaje {$row['embalaje']} %</label>";
+					echo "<span class='totales embalaje'> $ {$embalaje} </span><br>";
+					$descuento = round((-1) * $row['subtotal']* $row['descuento'] / 100, 2);
+					echo "<label class='subtotal' for=''>Descuento {$row['descuento']} %</label>";
+					echo "<span class='totales descuento'> $ {$descuento}</span><br>";
+					$subtotal = $subtotal + $embalaje + $descuento;
+					echo "<label class='subtotal' for=''>Subtotal</label>";
+					echo "<span class='totales subtotal'> $ {$subtotal}</span><br>";
+					$iva =round($subtotal * $row['iva'] / 100, 2);
+					echo "<label class='subtotal' for=''>IVA {$row['iva']} %</label>";
+					echo "<span class='totales iva'> $ {$iva}</span><br>";
+					$total = $subtotal + $iva;
+					echo "<label class='subtotal' for=''>Total</label>";
+					echo "<span class='totales total'> $ {$total}</span><br>";
+					break;
+					
 				default:
 					echo "No se realizó la búsqueda";
 					break;

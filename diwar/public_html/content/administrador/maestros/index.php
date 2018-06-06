@@ -1,16 +1,16 @@
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/header.php'; ?>
-<?php $maestros = ['usuarios']; ?>
-<h1>Maestros</h1>
-<select name='maestro' class='maestro'>
-	<?php
-		foreach ($maestros as $maestro) {
-			echo "<option value='{$maestro}'>{$maestro}</option>";
-		}
-	?>
-</select>
-<div id="mostrarFormulario">Mostrar Formulario</div>
-<div id="mostrarFiltros">Mostrar Filtros</div>
-<div id="formulario">
+<?php $maestros = ['modelos', 'mecanismos', 'variaciones', 'colores']; ?>
+<h2>Maestros - Componentes</h2>
+
+<div class='formulario' id="formulario">
+	<label for='maestro' class='maestro'>Maestro: </label>
+	<select name='maestro' class='maestro'>
+		<?php
+			foreach ($maestros as $maestro) {
+				echo "<option value='{$maestro}'>{$maestro}</option>";
+			}
+		?>
+	</select>
 	<form class="agregarMaestro formulario maestro">
 		<fieldset class="formularioLateral formulario maestro agregarMaestro">
 		</fieldset>
@@ -54,13 +54,22 @@
 				
 				});
 				
+				$('th.editar, th.tipo, th.precio, th.eliminar').addClass('angosto');
+				$('th.descripcion').addClass('muy-ancho');
+				$('td.editar, td.tipo, td.precio, td.eliminar').addClass('angosto');
+				$('td.descripcion').addClass('muy-ancho');
+				$('th.nombre').addClass('ancho');
+				$('td.nombre').addClass('ancho');
+				$('button').button();
+		
+				
 				
 			});
 		} 
 		var filtro = $('input.filtro').val();
 		var maestro = $('select.maestro').val();
 		
-		$('select.maestro').change(function() {
+		$('select.maestro').on('change', function() {
 			var filtro = $('input.filtro').val();
 			var maestro = $('select.maestro').val();
 			actualizarFormularioMaestro(maestro, 'nuevo');

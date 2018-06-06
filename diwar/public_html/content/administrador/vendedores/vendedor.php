@@ -1,5 +1,5 @@
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/header.php'; ?>
-<a href='vendedores.php'>Volver</a>
+
 <?php 
 	$id = 'nuevo';
 	if (isset($_REQUEST['id'])) {
@@ -11,7 +11,7 @@
 	echo "<h2 class='formulario edicion {$maestro} maestro' data-maestro='{$maestro}' data-id='{$id}' data-reference='{$reference}' >
 		Vendedor Nuevo
 	</h2>";
-
+	echo "<a href='../vendedores' class='jquibutton'>Volver</a>";
 	$tablas = array(
 		'vendedores' => 'Vendedor',
 		
