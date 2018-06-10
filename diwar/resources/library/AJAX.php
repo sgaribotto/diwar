@@ -42,6 +42,7 @@
 						$_SESSION['usuario'] = $row['usuario'];
 						$_SESSION['id'] = $row['id'];
 						$_SESSION['tipo'] = $row['tipo'];
+						$_SESSION['LAST_ACTIVITY'] = time();
 						
 						$data['usuario'] = $row['usuario'];
 						$data['id'] = $row['id'];

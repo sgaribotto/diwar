@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
+		<meta http-equiv="refresh" content="1200">
 		<?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/config.php'; ?>
 		<?php require LIBRARY_PATH . '/scripts.php'; ?>
 		<?php
@@ -14,6 +15,13 @@
 					echo "<script>location.assign('/diwar/public_html')</script>";
 				}
 			
+			} else {
+				if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1200)) {
+					// last request was more than 30 minutes ago
+					$_SESSION = array();
+					echo "<script>location.assign('/diwar/public_html')</script>";
+				}
+				$_SESSION['LAST_ACTIVITY'] = time();
 			}
 		?>
 		<link rel="stylesheet" type="text/css" href="/diwar/public_html/css/general.css">
