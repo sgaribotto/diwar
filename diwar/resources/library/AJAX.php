@@ -938,21 +938,39 @@
 				case "actualizarTablaSecundario":
 					//print_r($_REQUEST);
 					$campos = array();
-						foreach($_REQUEST as $key => $value) {
-							if (is_string($value)) {
-								$campos[$key] = $maestro = $mysqli->real_escape_string($value);
-							} else {
-								$campos[$key] = $value;
-							}
+					foreach($_REQUEST as $key => $value) {
+						if (is_string($value)) {
+							$campos[$key] = $maestro = $mysqli->real_escape_string($value);
+						} else {
+							$campos[$key] = $value;
 						}
-						$tabla = $campos['tabla'];
-						$reference = $campos['reference'];
-						$idMaestro = $campos['idMaestro'];
-						$en_uso = $campos['en_uso'];
+					}
+					$tabla = $campos['tabla'];
+					$reference = $campos['reference'];
+					$idMaestro = $campos['idMaestro'];
+					$en_uso = $campos['en_uso'];
 					$query = "SELECT *
 								FROM {$tabla}
 								WHERE {$reference} = {$idMaestro}
 									AND en_uso = {$en_uso}";
+					if ($tabla == 'clientes_vendedores') {
+						$join = 'vendedores';
+						$campoJoin = "vendedor";
+						if ($reference == 'vendedor') {
+							$join = 'clientes';
+							$campoJoint = "cliente";
+						}
+						$query = "SELECT cv.id, j.nombre, cv.observaciones
+									FROM clientes_vendedores AS cv
+									LEFT JOIN {$join} AS j
+										ON j.id = cv.{$campoJoin}
+									WHERE {$reference} = {$idMaestro}
+										AND cv.en_uso = {$en_uso}
+										AND j.en_uso = {$en_uso}
+									ORDER BY j.nombre";
+					}
+						
+					//echo $query;		
 					tablaListado($mysqli, $query, true, '', $tabla, $reference);
 					break;
 					
