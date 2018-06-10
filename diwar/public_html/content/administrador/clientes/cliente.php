@@ -21,13 +21,15 @@
 	if (!$dialog) {
 		echo "<a href='../clientes' class='jquibutton'>Volver</a>";
 	}	
-
+	
 	$tablas = array(
 		'clientes' => 'Cliente',
 		'contactos' => "Contactos", 
 		'direcciones_entrega' => "Direcciones de entrega", 
-		'clientes_vendedores' => "Vendedores"
 	);
+	if ($_SESSION['tipo'] == 'administrador') {
+		$tablas['clientes_vendedores'] = "Vendedores";
+	}
 	//print_r($tablas);
 	echo "<div class='tabs'>";
 	echo "<ul>";
