@@ -125,6 +125,7 @@
 								FROM variaciones AS v
 								
 								WHERE v.id = {$valor};";
+					echo $query;
 					$result = $mysqli->query($query);
 					$tipo = $result->fetch_array()[0];
 					
@@ -153,7 +154,7 @@
 								LEFT JOIN variaciones AS v
 									ON a.variaciones = v.id
 								WHERE modelo_con_mecanismo = '{$valor}'
-									AND v.en_uso = 1;";
+									AND a.en_uso = 1;";
 					$result = $mysqli->query($query);
 					//echo $query;
 					
@@ -163,15 +164,15 @@
 					}
 					//print_r($variaciones);
 					foreach ($variaciones as $tipo => $options) {
-						echo "<label class='variaciones label-variaciones-{$tipo} {$tipo} agregar-articulo' for='{$tipo}'>{$tipo}: </label>";
+						echo "<label class='variaciones label-variaciones-{$tipo} {$tipo} agregar-articulo' for='{$tipo}'>". ucfirst($tipo) .": </label>";
 						echo "<select class='variaciones agregar-articulo variaciones-{$tipo} {$tipo}' name='{$tipo}' required>";
 						echo "<option value=''>Seleccione {$tipo}...</option>";
 						foreach ($options as $id => $nombre) {
 							$selected = '';
 							$cuenta = count($variaciones[$tipo]);
 							if ($cuenta == 1) {
-								
 								$selected = 'selected';
+								
 							}
 							echo "<option value='{$id}' {$selected}>{$nombre}</option>";
 						}
@@ -190,13 +191,25 @@
 											FROM colores AS c
 											WHERE c.tipo = '{$tipo}'
 												AND c.en_uso = 1;";
-								echo $query;
+								$result = $mysqli->query($query);
+								
+								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+									echo "<option value='{$row['id']}' >{$row['nombre']}</option>";
+								}
+							} elseif ($cuenta == 1) {
+								$query = "SELECT c.id, c.nombre
+											FROM colores AS c
+											WHERE c.tipo = '{$nombre}'
+												AND c.en_uso = 1;";
+								
 								$result = $mysqli->query($query);
 								
 								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 									echo "<option value='{$row['id']}' >{$row['nombre']}</option>";
 								}
 							}
+								
+							
 							echo "</select>";
 						}
 						echo "<br />";
@@ -980,6 +993,11 @@
 					break;
 					
 				case "actualizarCheckboxes":
+					$tipo = $_SESSION['tipo'];
+					$readonly = "";
+					if ($tipo == 'vendedor') {
+						$readonly = 'disabled';
+					}
 					$campos = array();
 					foreach($_REQUEST as $key => $value) {
 						if (is_string($value)) {
@@ -1010,7 +1028,7 @@
 									$checked = 'checked';
 								}
 								echo "<input type='checkbox' value='{$row['id']}' data-mecanismo='{$row['id']}' data-tabla='mecanismos' 
-										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos' style='width: 10px;'/>";
+										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos' style='width: 10px;' {$readonly}/>";
 								echo "<label for='mecanismo' class='checkbox' style='width: 200px;'>{$row['nombre']}</label>";
 								echo "<br>";
 							}
@@ -1060,7 +1078,7 @@
 									}
 									echo "<input type='checkbox' value='{$row['id']}' data-variacion='{$row['id']}' data-tabla='variaciones' 
 											data-tipo='{$tipo}' {$checked} name='mecanismo' class='variaciones' 
-											data-modeloconmecanismo='{$modeloConMecanismo}' style='width: 10px;'/>";
+											data-modeloconmecanismo='{$modeloConMecanismo}' style='width: 10px;' {$readonly}/>";
 									echo "<label for='mecanismo' class='checkbox' style='width: 200px;'>{$row['nombre']}</label>";
 									echo "<br>";
 								}

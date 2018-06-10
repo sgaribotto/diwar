@@ -176,9 +176,10 @@
 					actualizarTabla('articulos-cargados');
 					
 					var actualizarOptions = function(select, busqueda) {
-						//console.log(select);
 						if (select != 'color-tapizado') {
 							$('div.variaciones').empty();
+							
+							
 						}
 						
 						var url = "../../../../resources/library/AJAX.php?act=options" + select;
@@ -189,10 +190,12 @@
 						$('.' + select).load(url, {"valor": valor}, function() {
 								
 							$('select.tapizado').change(function() {
-								
+								//console.log('change');
 								actualizarOptions('color-tapizado', 'tapizado');
 								
 							});
+							
+							
 						});
 						
 					}
