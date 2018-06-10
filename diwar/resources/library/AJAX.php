@@ -589,7 +589,11 @@
 							}
 						}
 						echo "<td class='{$maestro} maestro datos id {$key} eliminar'>";
-						echo "<button type='button' class='eliminarMaestro eliminarMaestro-{$maestro}' data-id='{$id}'>X</button>";
+						if ($detalles['en_uso'] == 1) {
+							echo "<button type='button' class='eliminarMaestro eliminarMaestro-{$maestro}' data-id='{$id}'>X</button>";
+						} else {
+							echo "Eliminado";
+						}
 						
 						echo "</td>";
 						echo "</tr>";
@@ -953,7 +957,7 @@
 					$query = "SELECT *
 								FROM {$tabla}
 								WHERE {$reference} = {$idMaestro}
-									AND en_uso = {$en_uso}";
+									AND en_uso >= {$en_uso}";
 					if ($tabla == 'clientes_vendedores') {
 						$join = 'vendedores';
 						$campoJoin = "vendedor";
@@ -961,13 +965,13 @@
 							$join = 'clientes';
 							$campoJoint = "cliente";
 						}
-						$query = "SELECT cv.id, j.nombre, cv.observaciones
+						$query = "SELECT cv.id, j.nombre, cv.observaciones, cv.en_uso
 									FROM clientes_vendedores AS cv
 									LEFT JOIN {$join} AS j
 										ON j.id = cv.{$campoJoin}
 									WHERE {$reference} = {$idMaestro}
-										AND cv.en_uso = {$en_uso}
-										AND j.en_uso = {$en_uso}
+										AND cv.en_uso >= {$en_uso}
+										AND j.en_uso >= {$en_uso}
 									ORDER BY j.nombre";
 					}
 						

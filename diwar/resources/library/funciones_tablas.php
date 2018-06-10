@@ -39,7 +39,11 @@
 			}
 			
 			if ($eliminar) {
-				echo "<td class='listado eliminar'><button class='eliminarElemento eliminar' data-id='{$datos['id']}' data-tabla='{$editarInline}'>X</button></td>";
+				if ($datos	['en_uso'] == 1) {
+					echo "<td class='listado eliminar'><button class='eliminarElemento eliminar' data-id='{$datos['id']}' data-tabla='{$editarInline}'>X</button></td>";
+				} else {
+					echo "<td>Eliminado</td>";
+				}
 			}
 			
 			if ($paginaEdicion != '') {
