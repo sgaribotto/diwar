@@ -34,8 +34,9 @@
 			var url = '../resources/library/AJAX.php?act=procesarIngreso';
 			
 			$.post(url, formValues, function(data) {
-				
+				//console.log(data);
 				data = JSON.parse(data);
+				//console.log(data);
 				if (data.error) {
 					$('p.error').text(data.error);
 				} else {

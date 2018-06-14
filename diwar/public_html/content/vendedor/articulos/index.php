@@ -94,6 +94,7 @@
 					});
 				});
 				
+				$('select.modeloConMecanismo').off();
 				$('select.modeloConMecanismo').change(function() {
 					
 					var modeloConMecanismo = $(this).val();

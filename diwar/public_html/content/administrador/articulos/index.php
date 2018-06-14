@@ -17,6 +17,23 @@
 	}
 ?>
 </select>
+
+<style>
+div.preview *{
+	padding: 3px;
+}
+
+div.preview {
+	vertical-align: middle;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+input.preview, textarea.preview, button.preview, select.preview {
+	display: inline-block;
+	vertical-align:middle;
+	margin: 3px;
+}
+</style>
 <?php
 	$tablaSecundaria = "mecanismos";
 	$variaciones = 'variaciones';
@@ -40,6 +57,7 @@
 	foreach ($tablas as $tabla => $titulo) {
 		echo "<li><a href='#{$tabla}'>{$titulo}</a></li>";
 	}
+	echo "<li><a href='#preview'>Preview</a></li>";
 	echo "</ul>";
 	foreach ($tablas as $tabla => $titulo) {
 		
@@ -52,6 +70,37 @@
 		
 		
 	}
+	echo "<div class='tab' id='preview' data-tabla='' data-tipo=''>";
+	echo "<div class='resultado'>";
+	echo "<p class='resultado'><b>Descripción: </b></p>";
+						echo "<p class='resultado'><b>Precio: </b></p>";
+	echo "</div>
+			<div class='modelo preview'>
+			
+			<form class='preview' data-tipo='modelo'>
+				
+					<select name='id' class='modeloPreview modelo preview'>";
+	echo "<option value=''>Seleccione Modelo...</option>";
+	$query = "SELECT DISTINCT id, nombre, descripcion, precio
+				FROM modelos
+				WHERe en_uso = 1
+					AND tipo = 'silla'
+				ORDER BY nombre";
+	$result = $mysqli->query($query);
+	while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+		echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
+	}
+	echo "</select>";
+	echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion modelo preview' style='width:560px; height:64px;'></textarea>";
+	echo "<input type='text' name='precio'class='innerPreview precio modelo preview' value='0' />";
+	echo "<button class='modeloPreview hidden preview modelo' type='submit'>Modificar</button>";
+	echo "</form>";
+		
+	echo "<div class='preview mecanismo'></div>
+			<div class='variaciones preview'></div>";
+	
+	echo "</div>";
+	
 	echo "</div>";
 ?>
 <script>
@@ -94,6 +143,7 @@
 					});
 				});
 				
+				$('select.modeloConMecanismo').off();
 				$('select.modeloConMecanismo').change(function() {
 					
 					var modeloConMecanismo = $(this).val();
@@ -126,6 +176,111 @@
 				actualizarCheckboxes(tabla, tipo, 'nulo');
 			});
 		});
+		
+		
+		$('select.modelo.preview').change(function() {
+			var modelo = $(this).val();
+			var url = "../../../../resources/library/AJAX.php?act=actualizarFormPreviewModelo";
+			//actualizarResultado();
+			$.post(url, {'modelo': modelo}, function(data) {
+				data = JSON.parse(data);
+				
+				console.log(data);
+				
+				$('textarea.modelo.descripcion.preview').text(data.descripcion);
+				$('input.precio.modelo.preview').val(data.precio);
+				
+				var url = "../../../../resources/library/AJAX.php?act=actualizarPreviewMecanismos";	
+				$('div.preview.mecanismo').load(url, {'modelo': modelo}, function() {
+					
+					
+					$('select.mecanismo.preview').change(function() {
+						var valor = $(this).val();
+						var url = "../../../../resources/library/AJAX.php?act=actualizarFormPreviewMecanismo";
+						$.post(url, {'valor': valor}, function(data) {
+							data = JSON.parse(data);
+							
+							actualizarResultado();
+							$('form.preview').off();
+							$('form.preview').submit(function(event) {
+								event.preventDefault();
+								var formValues = $(this).serialize();
+								formValues += "&tabla=" + $(this).data('tipo');
+								var url = "../../../../resources/library/AJAX.php?act=actualizarMaestroPreview";
+								$.post(url, formValues, function() {
+									actualizarResultado();
+									
+								});
+							});
+							
+							$('textarea.mecanismo.descripcion.preview').text(data.descripcion);
+							$('input.precio.mecanismo.preview').val(data.precio);
+							
+							var url = "../../../../resources/library/AJAX.php?act=actualizarPreviewVariaciones";	
+							$('div.preview.variaciones').load(url, {'valor': valor}, function() {
+								$('select.variaciones.preview').change(function() {
+								var valor = $(this).val();
+								var tipo = $(this).data('tipo');
+								var url = "../../../../resources/library/AJAX.php?act=actualizarPreviewVariacion";
+								$.post(url, {'valor': valor}, function(data) {
+									data = JSON.parse(data);
+									
+									//console.log(data);
+									
+									$('textarea.descripcion.preview.' + tipo).text(data.descripcion);
+									$('input.precio.preview.' + tipo).val(data.precio);
+									
+									actualizarResultado();
+									$('form.preview').off();
+									$('form.preview').submit(function(event) {
+										event.preventDefault();
+										var formValues = $(this).serialize();
+										formValues += "&tabla=" + $(this).data('tipo');
+										var url = "../../../../resources/library/AJAX.php?act=actualizarMaestroPreview";
+										$.post(url, formValues, function() {
+											actualizarResultado();
+											
+										});
+									});
+									
+								});
+							});
+								
+							});
+						});
+					});
+				
+				});
+			});
+		});
+		
+		$('form.preview').submit(function(event) {
+			event.preventDefault();
+			var formValues = $(this).serialize();
+			formValues += "&tabla=" + $(this).data('tipo');
+			var url = "../../../../resources/library/AJAX.php?act=actualizarMaestroPreview";
+			$.post(url, formValues, function() {
+				
+				actualizarResultado();
+			});
+		});
+		
+		var actualizarResultado = function() {
+			var url = "../../../../resources/library/AJAX.php?act=actualizarPreviewResultado";
+			
+			var modeloConMecanismo = $('select.preview.mecanismo').val();
+			var variaciones = '0, ';
+			$.each($('select.variaciones'), function() {
+				if ($(this).val()) {
+					variaciones += $(this).val() + ', ';
+				}
+			});
+			variaciones += '0';
+			
+			$('div.resultado').load(url, {"modeloConMecanismo": modeloConMecanismo, "variaciones": variaciones}, function() { 
+			});
+		}
+		//actualizarResultado();
 		
 		
 		

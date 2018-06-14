@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <?php require '../config.php'; ?>
 <?php require 'funciones_tablas.php'; ?>
 <?php
@@ -8,7 +9,7 @@
 	//print_r($_REQUEST);
 	
 	if (isset($_GET['act'])) {
-			session_start();
+			
 			$mysqli = connection($config, 'db1');
 			switch($_GET['act']) {
 				
@@ -111,6 +112,7 @@
 								WHERE modelo = '{$valor}'
 									AND mm.en_uso = 1;";
 					$result = $mysqli->query($query);
+					
 					echo "<option value=''>Seleccione mecanismo...</option>";
 					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 						echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
@@ -853,7 +855,7 @@
 										OR provincia LIKE '%{$filtro}%'
 										OR cuit LIKE '%{$filtro}%')";
 							}
-							$query = "SELECT id, codigo_cliente, cuit, nombre, localidad, provincia
+							$query = "SELECT id, codigo_cliente, cuit, nombre, localidad, provincia, en_uso
 								FROM clientes
 								WHERE en_uso = {$campos['en_uso']} {$where}";
 							tablaListado($mysqli, $query, true, 'cliente.php', '');
@@ -889,7 +891,7 @@
 							}
 							$query = "SELECT *
 								FROM {$tabla}
-								WHERE en_uso = {$campos['en_uso']}
+								WHERE en_uso >= {$campos['en_uso']}
 									{$where}";
 									
 							tablaListado($mysqli, $query, true, '', '');
@@ -944,7 +946,7 @@
 											OR provincia LIKE '%{$filtro}%'
 											OR cuit LIKE '%{$filtro}%')";
 								}
-								$query = "SELECT id, codigo_cliente, cuit, nombre, localidad, provincia
+								$query = "SELECT id, codigo_cliente, cuit, nombre, localidad, provincia, en_uso
 									FROM clientes
 									WHERE en_uso = {$campos['en_uso']} {$where}";
 								tablaListado($mysqli, $query, true, 'cliente.php', false);
@@ -1037,6 +1039,7 @@
 							
 						case "variaciones":
 							echo "<select class='modeloConMecanismo' name='modeloConMecanismo'>";
+							echo "<option value=''>Seleccione mecanismo...</option>";
 							$query = "SELECT mm.id, m.nombre
 										FROM modelos_con_mecanismo AS mm
 										LEFT JOIN mecanismos AS m
@@ -1063,14 +1066,15 @@
 								echo "</select><br>";
 								
 								$query = "SELECT v.id, v.nombre, IFNULL(a.en_uso, 0) AS checked
-											FROM diwar.variaciones AS v
+											FROM variaciones AS v
 											LEFT JOIN articulos AS a
 												ON a.variaciones = v.id
 													AND a.modelo_con_mecanismo = {$modeloConMecanismo}
 											WHERE v.tipo = '{$tipo}'
 											ORDER BY v.nombre";
 								$result = $mysqli->query($query);
-								
+								//echo $query;
+								//echo $mysqli->error;
 								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 									$checked = '';
 									if ($row['checked'] == 1) {
@@ -1548,6 +1552,200 @@
 					echo "<label class='subtotal' for=''>Total</label>";
 					echo "<span class='totales total'> $ {$total}</span><br>";
 					break;
+					
+				case "actualizarFormPreviewModelo":
+					$modelo = $mysqli->real_escape_string($_REQUEST['modelo']);
+					$query = "SELECT m.id, m.nombre, m.tipo, m.precio, m.descripcion
+								FROM modelos As m
+								WHERE m.id = {$modelo}";
+					$result = $mysqli->query($query);
+					//echo $query;
+					//echo $mysqli->error;
+					$row = $result->fetch_array();
+					
+					$data = json_encode($row);
+					echo $data;
+					break;
+				
+				case "actualizarPreviewMecanismos";
+					
+					$modelo = $mysqli->real_escape_string($_REQUEST['modelo']);
+					
+					echo "
+						<div class'modeloPreview'><form class='preview' method='post' class='modeloPreview' data-tipo='mecanismos'>
+						
+							<select name='id' class='modeloPreview mecanismo preview' data-tipo='mecanismo'>";
+					echo "<option value=''>Seleccione Modelo...</option>";
+					$query = "SELECT mm.id, mm.mecanismo, m.nombre,
+								m.descripcion, m.precio
+								FROM modelos_con_mecanismo AS mm
+								LEFT JOIN mecanismos AS m
+									ON mm.mecanismo = m.id
+								WHERE mm.modelo = {$modelo}
+									AND mm.en_uso = 1";
+						
+					$result = $mysqli->query($query);
+					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+						echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
+					}
+					echo "</select>";
+					echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion mecanismo preview' style='width:560px; height:64px;'></textarea>";
+					echo "<input type='text' name='precio'class='innerPreview precio mecanismo preview' value='0' />";
+					echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
+					echo "</form></div>";
+					
+					break;	
+					
+				case "actualizarFormPreviewMecanismo":
+					$valor = $mysqli->real_escape_string($_REQUEST['valor']);
+					
+					
+					$query = "SELECT m.id, m.nombre, m.precio, m.descripcion
+								FROM mecanismos As m
+								WHERE m.id = (SELECT mecanismo
+												FROM modelos_con_mecanismo
+												WHERE id = {$valor})
+								ORDER BY m.nombre";
+					$result = $mysqli->query($query);
+					//echo $query;
+					//echo $mysqli->error;
+					$row = $result->fetch_array();
+					
+					$data = json_encode($row);
+					echo $data;
+					break;
+				
+				case "actualizarPreviewVariaciones";
+					
+					$valor = $mysqli->real_escape_string($_REQUEST['valor']);
+					$query = "SELECT v.id, v.tipo, v.nombre
+								FROM articulos AS a
+								LEFT JOIN variaciones AS v
+									ON v.id = a.variaciones
+								WHERE a.modelo_con_mecanismo = {$valor}
+									AND a.en_uso = 1
+								ORDER BY v.tipo, v.nombre";
+					$campos = array();
+					$result = $mysqli->query($query);
+					//echo $query;
+					//echo $mysqli->error;
+					
+					//print_r($campos);
+					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+						$campos[$row['tipo']][$row['id']] = $row['nombre'];
+					}
+					foreach ($campos as $tipo => $articulos) {
+						echo "<div class='preview {$tipo}'>
+							<form class='preview {$tipo}' method='post' data-tipo='variaciones'>
+							
+								<select class='modeloPreview {$tipo} variaciones preview' data-tipo='{$tipo}' name='id'>";
+						echo "<option value=''>Seleccione {$tipo}...</option>";
+							
+						foreach ($articulos as $id => $nombre) {
+							echo "<option value='{$id}'>{$nombre}</option>";
+						}
+						echo "</select>";
+						echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion {$tipo} preview' style='width:560px; height:64px;'></textarea>";
+						echo "<input type='text' name='precio'class='innerPreview precio {$tipo} preview' value='0' />";
+						echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
+						echo "</form></div>";
+					}
+					break;
+					
+				case "actualizarPreviewVariacion":
+					$valor = $mysqli->real_escape_string($_REQUEST['valor']);
+					
+					
+					$query = "SELECT v.id, v.nombre, v.precio, v.descripcion, v.tipo
+								FROM variaciones As v
+								WHERE v.id = {$valor}
+								ORDER BY v.nombre";
+					$result = $mysqli->query($query);
+					//echo $query;
+					//echo $mysqli->error;
+					$row = $result->fetch_array();
+					
+					$data = json_encode($row);
+					echo $data;
+					break;
+					
+				case "actualizarMaestroPreview":
+					$descripcion = $mysqli->real_escape_string($_REQUEST['descripcion']);
+					$precio = $mysqli->real_escape_string($_REQUEST['precio']);
+					$tabla = $mysqli->real_escape_string($_REQUEST['tabla']);
+					$id = $_REQUEST['id'];
+					
+					switch ($tabla) {
+						case "modelo":
+							$query = "UPDATE modelos
+										SET descripcion = '{$descripcion}',
+											precio = {$precio}
+										WHERE id = {$id};";
+										
+							break;
+						 
+						case "mecanismos":
+							$query = "UPDATE mecanismos
+										SET descripcion = '{$descripcion}',
+											precio = {$precio}
+										WHERE id = (SELECT mecanismo
+										FROM modelos_con_mecanismo
+										WHERE id = {$id})";
+										
+							break;
+							
+						case "variaciones":
+							$query = "UPDATE variaciones
+										SET descripcion = '{$descripcion}',
+											precio = {$precio}
+										WHERE id = {$id};";
+							break;
+						
+					}
+					
+					$mysqli->query($query);
+					
+					
+					break;
+					
+					case "actualizarPreviewResultado":
+						$detalle = "";
+						$precio = 0;
+						$query = "SELECT modelos.descripcion AS desc_modelo, modelos.precio AS precio_modelo, 
+										mec.descripcion AS desc_mecanismo, mec.precio AS precio_mecanismo
+									FROM modelos_con_mecanismo AS mm
+									LEFT JOIN modelos ON modelos.id = mm.modelo
+									LEFT JOIN mecanismos AS mec ON mec.id = mm.mecanismo
+									WHERE mm.id = {$_REQUEST['modeloConMecanismo']}";
+						$result = $mysqli->query($query);
+						
+						$row = $result->fetch_array();
+						
+						$precio += $row['precio_modelo'];
+						$detalle .= $row['desc_modelo'] . ". ";
+						$precio += $row['precio_mecanismo'];
+						$detalle .= $row['desc_mecanismo'] . ". ";
+						
+						$variaciones = "(" . $_REQUEST['variaciones'] . ")";
+						
+						$query = "SELECT v.tipo, v.descripcion, v.precio
+									FROM variaciones AS v
+									WHERE id IN {$variaciones}";
+						$result = $mysqli->query($query);
+						//echo $query;
+						//echo $mysqli->error;
+						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+							if (!in_array($row['tipo'], ['red', 'tapizado', 'casco'])) {
+								$detalle .= $row['descripcion'] . ". ";
+								$precio += $row['precio'];
+							} else {
+								$detalle .= $row['descripcion'] . " color [a elección] ";
+								$precio += $row['precio'];
+							}
+						}
+						echo "<p class='resultado'><b>Descripción: </b>{$detalle}</p>";
+						echo "<p class='resultado'><b>Precio: </b>{$precio}</p>";
+						break;
 					
 				default:
 					echo "No se realizó la búsqueda";

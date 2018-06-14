@@ -1,11 +1,15 @@
-<?php session_start(); ?>
-<?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/config.php'; ?>
-<?php
-
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="refresh" content="1200">
+		<?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/config.php'; ?>
+		<?php require LIBRARY_PATH . '/scripts.php'; ?>
+		<?php
+			session_start();
 			//print_r($_SERVER);
 			//PONER QUE PASA CUANDO NO HAY SESSION
 			//print_r($_SERVER);
-			
 			if (!isset($_SESSION['tipo'])) {
 				if ($_SERVER['PHP_SELF'] != $config['paths']['start']) {
 					echo "<script>location.assign('/diwar/public_html')</script>";
@@ -20,12 +24,6 @@
 				$_SESSION['LAST_ACTIVITY'] = time();
 			}
 		?>
-		<?php require LIBRARY_PATH . '/scripts.php'; ?>
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="refresh" content="1200">		
 		<link rel="stylesheet" type="text/css" href="/diwar/public_html/css/general.css">
 		
 	</head>

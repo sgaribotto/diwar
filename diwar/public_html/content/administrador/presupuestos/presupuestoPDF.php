@@ -1,7 +1,7 @@
 <?php require_once $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/library/tcpdf/tcpdf.php'; ?>
 <?php 
-	$mysqli = new mysqli('localhost', 'diwar', 'diwar', 'diwar');
-	ini_set('max_execution_time', 60);
+	$mysqli = new mysqli('localhost', 'id5714927_diwar', 'diwar', 'id5714927_diwar');
+	//ini_set('max_execution_time', 60);
 	if (isset($_REQUEST['num'])) {
 		if ($_REQUEST['num'] != 'nuevo') {
 			$numero = $_REQUEST['num'];
