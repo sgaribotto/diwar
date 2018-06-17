@@ -308,6 +308,8 @@
 					echo "</tr>";
 					echo "</thead>";
 					echo "<tbody>";
+					
+					$subtotal = 0;
 					foreach ($articulos as $id => $detalles) {
 						$detalle = "";
 						$precio = 0;
@@ -356,7 +358,7 @@
 						}
 						
 						$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
-						
+						$subtotal += $precio;
 						
 						
 									
@@ -378,7 +380,7 @@
 					
 					//$numero = $_REQUEST['numero'];
 					$query = "SELECT SUM(p.precio_a_la_emision) AS subtotal,
-								dp.embalaje, dp.descuento, dp.iva
+								dp.embalaje, dp.descuento, dp.iva, dp.emitido
 							FROM datos_presupuesto AS dp
 							LEFT JOIN presupuestos AS p
 								ON p.numero = dp.numero
@@ -388,13 +390,16 @@
 					
 					$row = $result->fetch_array();
 					
-					$subtotal = round($row['subtotal'], 2);
+					
+					if ($row['emitido']) {
+						$subtotal = round($row['subtotal'], 2);
+					}
 					echo "<tr>";
 					echo "<td colspan='2' class='subtotales blanco'></td>";
 					echo "<td colspan='2' class='subtotales titulo'>Subtotal</td>";
 					echo "<td class='importe subtotales'> $ {$subtotal}</td>";
 					echo "</tr>";
-					$embalaje = round($row['subtotal'] * $row['embalaje'] / 100, 2);
+					$embalaje = round($subtotal * $row['embalaje'] / 100, 2);
 					echo "<tr>";
 					echo "<td colspan='2' class='subtotales blanco'></td>";
 					echo "<td colspan='2' class='subtotales titulo'>Embalaje {$row['embalaje']} %</td>";
@@ -402,7 +407,7 @@
 					echo "<td class='importe subtotales'> $ {$embalaje}</td>";
 					echo "</tr>";
 					echo "<tr>";
-					$descuento = round((-1) * $row['subtotal']* $row['descuento'] / 100, 2);
+					$descuento = round((-1) *$subtotal * $row['descuento'] / 100, 2);
 					echo "<td colspan='2' class='subtotales blanco'></td>";
 					echo "<td colspan='2' class='subtotales titulo'>Descuento {$row['descuento']} %</td>";
 					echo "<td class='importe subtotales'> $ {$descuento}</td>";
@@ -425,7 +430,7 @@
 					echo "<td colspan='2' class='subtotales titulo'>Total</td>";
 					echo "<td class='importe subtotales'> $ {$total}</td>";
 					echo "</tr>";
-						echo "</tbody>";
+					echo "</tbody>";
 					echo "</table>";
 					
 					break;
@@ -847,7 +852,8 @@
 						$query = "SELECT dp.numero, v.nombre AS vendedor, c.nombre AS cliente,
 									COUNT(p.articulo) AS cantidad_articulos, 
 									SUM(p.precio_a_la_emision) AS precio_total,
-									dp.fecha_emision, IF(dp.emitido = 1, 'Sí', 'No') AS emitido
+									dp.fecha_emision, IF(dp.emitido = 1, 'Sí', 'No') AS emitido,
+									dp.embalaje, dp.descuento, dp.iva
 								FROM datos_presupuesto AS dp
 								LEFT JOIN presupuestos As p
 									ON dp.numero = p.numero
@@ -864,6 +870,13 @@
 						echo '<br>';
 						echo $mysqli->error;*/
 						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+							$subtotal = $row['precio_total'];
+							$embalaje = $subtotal * ($row['embalaje'] / 100);
+							$descuento = $subtotal * ($row['descuento'] / 100);
+							$subtotal += $embalaje - $descuento;
+							$iva = $subtotal * ($row['iva'] / 100);
+							$precioTotal = $subtotal + $iva;
+							$precioTotal = sprintf("$ %.2f", $precioTotal);	
 							echo "<tr>
 									<td class='presupuestos cantidad'><a href='presupuesto.php?num={$row['numero']}' class='jquibutton'>{$row['numero']}</a></td>";
 							if ($_SESSION['tipo'] != 'vendedor') { 
@@ -871,7 +884,7 @@
 							}
 							echo "<td class='presupuestos'>{$row['cliente']}</td>
 									<td class='presupuestos cantidad'>{$row['cantidad_articulos']}</td>
-									<td class='presupuestos cantidad'>{$row['precio_total']}</td>
+									<td class='presupuestos cantidad'>{$precioTotal}</td>
 									<td class='presupuestos'>{$row['fecha_emision']}</td>
 									<td class='presupuestos cantidad'>";
 								if ($row['emitido'] != 'No') {
