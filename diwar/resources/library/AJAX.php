@@ -272,7 +272,7 @@
 					
 				case 'actualizarTabla-articulos-cargados':
 					$numero = $_REQUEST['numero'];
-					$query = "SELECT DISTINCT p.id, a.codigo_articulo, p.variaciones, cred.nombre AS cred, 
+					$query = "SELECT DISTINCT p.id, IFNULL(a.codigo_articulo, '') AS codigo_articulo, p.variaciones, cred.nombre AS cred, 
 								ctapiz.nombre AS ctapiz, ccasco.nombre AS ccasco, 
 								p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo,
 								p.emitido
@@ -333,15 +333,24 @@
 						$precio += $row['precio'];
 						
 						if ($detalles['variaciones'] != '') {
-							$query = "SELECT descripcion, precio
+							$query = "SELECT tipo, descripcion, precio
 										FROM variaciones
 										WHERE id IN ({$detalles['variaciones']});";
 							$result = $mysqli->query($query);
 							
 							while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 								if ($row['descripcion'] != '') {
-									$detalle .= $row['descripcion'] . ". ";
+									$detalle .= $row['descripcion'] . " ";
 									$precio += $row['precio'];
+									if ($row['tipo'] == 'tapizado') {
+										$detalle .=  $detalles['ctapiz'] . ". ";
+									}
+									if ($row['tipo'] == 'red') {
+										$detalle .= $detalles['cred'] . ". ";
+									}
+									if ($row['tipo'] == 'casco') {
+										$detalle .= $detalles['ccasco'] . ". ";
+									}
 								}
 							}
 						}
@@ -349,15 +358,7 @@
 						$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
 						
 						
-						if ($detalles['ctapiz'] != '') {
-							$detalle .= "Tapizado color " . $detalles['ctapiz'] . ". ";
-						}
-						if ($detalles['cred'] != '') {
-							$detalle .= "Red color " . $detalles['cred'] . ". ";
-						}
-						if ($detalles['ccasco'] != '') {
-							$detalle .= "Casco color " . $detalles['ccasco'] . ". ";
-						}
+						
 									
 									
 						
@@ -650,8 +651,10 @@
 					}
 					$maestro = $campos['maestro'];
 					
+					
+					
 					if ($id == 'nuevo') {
-						$query = "REPLACE INTO {$maestro} SET ";
+						$query = "INSERT IGNORE INTO {$maestro} SET ";
 						foreach ($campos as $campo => $valor) {
 							if (!in_array($campo, $excluir)) {
 								$query .= " {$campo} = '{$valor}', ";
@@ -673,11 +676,62 @@
 						$mysqli->query($query);
 					}
 					
-					//echo $query;
-					//echo $mysqli->error;
+					if ($maestro == 'clientes') {
+						$return = array();
+						if ($mysqli->error) {
+							$return['error']['text'] = $mysqli->error;
+							$return['error']['number'] = $mysqli->errnum;
+						} else {
+							$return['id'] = $id;
+						}
+						
+						if ($_SESSION['tipo'] == 'vendedor') {
+							
+							$query = "INSERT IGNORE INTO clientes_vendedores
+										SET cliente = {$id},
+											vendedor = (SELECT vendedor
+												FROM usuarios
+												WHERE id = {$_SESSION['id']})";
+							$mysqli->query($query);
+						}
+						
+						if ($mysqli->error) {
+							$return['error']['text'] = $mysqli->error;
+							$return['error']['number'] = $mysqli->errnum;
+						}
+						
+						$data = json_encode($return);
+						echo $data;
+					} else {
+						echo $id;
+					}
 					
-					echo $id;
 					break;
+					
+				case "chequearCUIT":
+					$cuit = $mysqli->real_escape_string($_REQUEST['cuit']);
+					$query = "SELECT id
+								FROM clientes
+								WHERE cuit = '{$cuit}'";
+					$result = $mysqli->query($query);
+					echo $mysqli->error;
+					if ($result->num_rows) {
+						$id = $result->fetch_array()['id'];
+						
+						$query = "INSERT IGNORE INTO clientes_vendedores
+									SET cliente = {$id},
+										vendedor = (SELECT vendedor
+											FROM usuarios
+											WHERE id = {$_SESSION['id']})";
+						$mysqli->query($query);
+						
+						echo $id;
+					} else {
+						echo "nuevo";
+					}
+					
+					break;
+					
 				case "agregarSecundario":
 					$campos = array();
 					$id = $_REQUEST['id'];
@@ -1589,10 +1643,12 @@
 						echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
 					}
 					echo "</select>";
-					echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion mecanismo preview' style='width:560px; height:64px;'></textarea>";
-					echo "<input type='text' name='precio'class='innerPreview precio mecanismo preview' value='0' />";
-					echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
-					echo "</form></div>";
+					if ($_SESSION['tipo'] == 'admonistrador') {
+						echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion mecanismo preview' style='width:560px; height:64px;'></textarea>";
+						echo "<input type='text' name='precio'class='innerPreview precio mecanismo preview' value='0' />";
+						echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
+						echo "</form>";
+					}
 					
 					break;	
 					
@@ -1600,12 +1656,12 @@
 					$valor = $mysqli->real_escape_string($_REQUEST['valor']);
 					
 					
-					$query = "SELECT m.id, m.nombre, m.precio, m.descripcion
-								FROM mecanismos As m
-								WHERE m.id = (SELECT mecanismo
-												FROM modelos_con_mecanismo
-												WHERE id = {$valor})
-								ORDER BY m.nombre";
+					$query = "SELECT m.id, m.nombre, mm.precio, m.descripcion
+								FROM modelos_con_mecanismo AS mm
+								LEFT JOIN mecanismos AS m
+									ON m.id = mm.mecanismo
+								WHERE mm.id = {$valor}
+								#ORDER BY m.nombre";
 					$result = $mysqli->query($query);
 					//echo $query;
 					//echo $mysqli->error;
@@ -1645,10 +1701,12 @@
 							echo "<option value='{$id}'>{$nombre}</option>";
 						}
 						echo "</select>";
-						echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion {$tipo} preview' style='width:560px; height:64px;'></textarea>";
-						echo "<input type='text' name='precio'class='innerPreview precio {$tipo} preview' value='0' />";
-						echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
-						echo "</form></div>";
+						if ($_SESSION['tipo'] == 'admonistrador') {
+							echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion {$tipo} preview' style='width:560px; height:64px;'></textarea>";
+							echo "<input type='text' name='precio'class='innerPreview precio {$tipo} preview' value='0' />";
+							echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
+							echo "</form></div>";
+						}
 					}
 					break;
 					
@@ -1685,12 +1743,9 @@
 							break;
 						 
 						case "mecanismos":
-							$query = "UPDATE mecanismos
-										SET descripcion = '{$descripcion}',
-											precio = {$precio}
-										WHERE id = (SELECT mecanismo
-										FROM modelos_con_mecanismo
-										WHERE id = {$id})";
+							$query = "UPDATE modelos_con_mecanismo
+										SET precio = {$precio}
+										WHERE id = {$id}";
 										
 							break;
 							
@@ -1711,8 +1766,9 @@
 					case "actualizarPreviewResultado":
 						$detalle = "";
 						$precio = 0;
-						$query = "SELECT modelos.descripcion AS desc_modelo, modelos.precio AS precio_modelo, 
-										mec.descripcion AS desc_mecanismo, mec.precio AS precio_mecanismo
+						$query = "SELECT modelos.descripcion AS desc_modelo,  
+										mec.descripcion AS desc_mecanismo,
+										mm.precio
 									FROM modelos_con_mecanismo AS mm
 									LEFT JOIN modelos ON modelos.id = mm.modelo
 									LEFT JOIN mecanismos AS mec ON mec.id = mm.mecanismo
@@ -1721,10 +1777,9 @@
 						
 						$row = $result->fetch_array();
 						
-						$precio += $row['precio_modelo'];
-						$detalle .= $row['desc_modelo'] . ". ";
-						$precio += $row['precio_mecanismo'];
-						$detalle .= $row['desc_mecanismo'] . ". ";
+						$precio += $row['precio'];
+						$detalle .= $row['desc_modelo'] . " ";
+						$detalle .= $row['desc_mecanismo'] . " ";
 						
 						$variaciones = "(" . $_REQUEST['variaciones'] . ")";
 						
@@ -1736,7 +1791,7 @@
 						//echo $mysqli->error;
 						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 							if (!in_array($row['tipo'], ['red', 'tapizado', 'casco'])) {
-								$detalle .= $row['descripcion'] . ". ";
+								$detalle .= $row['descripcion'] . " ";
 								$precio += $row['precio'];
 							} else {
 								$detalle .= $row['descripcion'] . " color [a elección] ";

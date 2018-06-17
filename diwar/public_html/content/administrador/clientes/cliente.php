@@ -1,5 +1,16 @@
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/header.php'; ?>
+<div class="container" id='container'>
+<?php 
+	if (isset($_REQUEST['dialog'])) {
 
+?>
+	<style>
+	div.header {
+		display: none;
+	}
+	</style>
+	<?php } ?>
+	
 <?php 
 	$id = 'nuevo';
 	if (isset($_REQUEST['id'])) {
@@ -86,6 +97,12 @@
 			
 			var url = "../../../../resources/library/AJAX.php?act=agregarMaestro";
 			$.post(url, formValues, function(data) {
+				data = JSON.parse(data);
+				if (data.error) {
+					alert('Error inesperado' + data.error.numero);
+				} else {
+					alert('Se ha agregado un nuevo cliente');
+				}
 			});
 		});
 					
@@ -211,9 +228,12 @@
 			actualizarTablaSecundario(tabla, '');
 		});
 		
+		
+		
 		$( "div.tabs" ).tabs();
 		
 				
 	});
 </script>
+</div>
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/footer.php'; ?>	

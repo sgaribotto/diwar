@@ -30,6 +30,7 @@
 		
 	</head>
 		<body>
+		
 		<div class="header">
 			<img src="<?php echo $config['paths']['images']['layout'] . "/logo-diwar-solo.jpg"; ?>" class='logo' />
 			<?php if (isset($_SESSION['tipo'])) { ?>

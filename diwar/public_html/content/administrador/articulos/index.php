@@ -54,10 +54,11 @@ input.preview, textarea.preview, button.preview, select.preview {
 	//print_r($tablas);
 	echo "<div class='tabs'>";
 	echo "<ul>";
+	echo "<li><a href='#preview'>Preview</a></li>";
 	foreach ($tablas as $tabla => $titulo) {
 		echo "<li><a href='#{$tabla}'>{$titulo}</a></li>";
 	}
-	echo "<li><a href='#preview'>Preview</a></li>";
+	
 	echo "</ul>";
 	foreach ($tablas as $tabla => $titulo) {
 		
@@ -91,10 +92,12 @@ input.preview, textarea.preview, button.preview, select.preview {
 		echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
 	}
 	echo "</select>";
-	echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion modelo preview' style='width:560px; height:64px;'></textarea>";
-	echo "<input type='text' name='precio'class='innerPreview precio modelo preview' value='0' />";
-	echo "<button class='modeloPreview hidden preview modelo' type='submit'>Modificar</button>";
-	echo "</form>";
+	if ($_SESSION['tipo'] == 'admonistrador') {
+		echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion modelo preview' style='width:560px; height:64px;'></textarea>";
+		//echo "<input type='text' name='precio'class='innerPreview precio modelo preview' value='0' />";
+		echo "<button class='modeloPreview hidden preview modelo' type='submit'>Modificar</button>";
+		echo "</form>";
+	}
 		
 	echo "<div class='preview mecanismo'></div>
 			<div class='variaciones preview'></div>";

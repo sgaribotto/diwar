@@ -117,9 +117,9 @@
 				<form class='agregar-articulos' method='post' action='#'>
 					<fieldset class='agregar-articulos'>
 						<label class='presupuesto-nuevo' for='cantidad'>Cantidad: </label>
-						<input type='number' class='presupuesto-nuevo cantidad' name='cantidad' value='1' min='1'/>
+						<input type='number' class='presupuesto-nuevo cantidad' name='cantidad' value='1' min='1' style='width:54px;'/>
 						<label class='presupuesto-nuevo' for='descuento_articulo'>Descuento del artículo: </label>
-						<input type='number' class='presupuesto-nuevo descuento-articulo' name='descuento_articulo' value='0' min='0' max='100'/>%
+						<input type='number' class='presupuesto-nuevo descuento-articulo' name='descuento_articulo' value='0' min='0' max='100' style='width:54px;'/>%
 						<br>
 						<label class='agregar-articulo' for='articulo'>Modelo: </label>
 						<select class='agregar-articulo modelo' name='modelo' required >
@@ -329,7 +329,7 @@
 					
 					$('button.ABMcliente').click(function() {
 						var id = $('select,clientes').val() || 'nuevo';
-						var url = '../clientes/cliente.php?dialog=true&id=' + id;
+						var url = '../clientes/cliente.php?dialog=true&id=' + id; // + " #container";
 						
 						$('div.ABMcliente').load(url, function() {
 							//alert(url);

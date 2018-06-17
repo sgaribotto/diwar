@@ -27,6 +27,17 @@ function actualizarFormularioMaestro(maestro, id) {
 			$('select.maestro').change();
 		});
 		
+		$('input.cuit').change(function() {
+			var cuit = $(this).val();
+			var url = "../../../../resources/library/AJAX.php?act=chequearCUIT";
+			$.post(url, {"cuit": cuit}, function(data) {
+				if (data != 'nuevo') {
+					alert('El cuit que desea cargar ya existe, será redireccionado al cliente');
+					location.assign('../clientes/cliente.php?id=' + data);
+				}
+			});
+		});
+		
 		
 	});
 	
