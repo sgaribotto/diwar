@@ -33,6 +33,10 @@ input.preview, textarea.preview, button.preview, select.preview {
 	vertical-align:middle;
 	margin: 3px;
 }
+
+input.precio-hidden {
+	display: none;
+}
 </style>
 <?php
 	$tablaSecundaria = "mecanismos";
@@ -94,7 +98,7 @@ input.preview, textarea.preview, button.preview, select.preview {
 	echo "</select>";
 	if ($_SESSION['tipo'] == 'administrador') {
 		echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion modelo preview' style='width:560px; height:64px;'></textarea>";
-		echo "<input type='text' name='precio'class='innerPreview precio modelo preview' value='0' hidden/>";
+		echo "<input type='hidden' name='precio'class='innerPreview precio modelo preview' value='0' hidden/>";
 		echo "<button class='modeloPreview hidden preview modelo' type='submit'>Modificar</button>";
 		echo "</form>";
 	}
@@ -133,16 +137,32 @@ input.preview, textarea.preview, button.preview, select.preview {
 				
 				$('input.mecanismos:checkbox').off();
 				$('input.mecanismos:checkbox').change(function() {
-					
+					//alert('test');
+					//$(this).next('input').toggleClass('precio-hidden');
 					var modelo = $(this).data('modelo');
 					var mecanismo = $(this).data('mecanismo');
 					var en_uso = 0;
 					if ($(this).prop('checked')) {
 						en_uso = 1;
+						$(this).next().next().removeClass('precio-hidden');
+					} else {
+						$(this).next().next().addClass('precio-hidden');
 					}
 					var url = "../../../../resources/library/AJAX.php?act=actualizarModeloConMecanismo";
 					$.post(url, {"modelo": modelo, "mecanismo": mecanismo, "en_uso": en_uso }, function(data) {
 						$('select.modeloConMecanismo').change();
+					});
+					
+					
+				});
+				
+				$('input.precio-mm').off();
+				$('input.precio-mm').on('change keyup', function() {
+					var id = $(this).data('id');
+					var precio = $(this).val();
+					var url = "../../../../resources/library/AJAX.php?act=actualizarPrecioModeloConMecanismo";
+					$.post(url, {"id": id, "precio": precio }, function(data) {
+						//$('select.modeloConMecanismo').change();
 					});
 				});
 				

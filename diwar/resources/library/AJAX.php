@@ -1066,9 +1066,9 @@
 					
 				case "actualizarCheckboxes":
 					$tipo = $_SESSION['tipo'];
-					$readonly = "";
+					$disabled = "";
 					if ($tipo == 'vendedor') {
-						$readonly = 'disabled';
+						$disabled = 'disabled';
 					}
 					$campos = array();
 					foreach($_REQUEST as $key => $value) {
@@ -1101,14 +1101,19 @@
 									$checked = 'checked';
 								}
 								echo "<input type='checkbox' value='{$row['id']}' data-mecanismo='{$row['id']}' data-tabla='mecanismos' 
-										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos' style='width: 10px;' {$readonly}/>";
+										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos' style='width: 10px;' {$disabled}/>";
 								echo "<label for='mecanismo' class='checkbox' style='width: 250px;margin-right: 10px;'>{$row['nombre']}</label>";
 								
 								$display = 'precio-mm';
 								if ($row['checked'] != 1) {
 									$display = 'precio-mm precio-hidden';
 								}
-								echo "<input tpye='number' name='precio' data-id='{$row['modelo_con_mecanismo']}' value='{$row['precio']}' class='{$display}'>";
+								
+								$readonly = '';
+								if ($_SESSION['tipo'] != 'administrador') {
+									$readonly = 'readonly';
+								}
+								echo "<input tpye='number' name='precio' data-id='{$row['modelo_con_mecanismo']}' value='{$row['precio']}' class='{$display}' {$readonly}>";
 								echo "<br>";
 							}
 							
