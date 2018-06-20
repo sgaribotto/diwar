@@ -565,14 +565,17 @@
 					if ($maestro == 'usuarios') {
 						$campoFiltrado = "CONCAT(IFNULL(tipo, ''), IFNULL(nombre, ''), IFNULL(usuario, ''))";
 					}
+					if ($maestro == 'modelos_con_mecanismo') {
+						$campoFiltrado = 'id';
+					}
 					$query = "SELECT *
 								FROM {$maestro}
 								WHERE en_uso >= {$en_uso}
 									AND {$campoFiltrado} LIKE '%{$filtro}%'
-								ORDER BY nombre, id";
+								ORDER BY {$campoFiltrado}, id";
 					$result = $mysqli->query($query);
-					//echo $query;
-					//echo $mysqli->error;
+					echo $query;
+					echo $mysqli->error;
 					$campos = array();
 					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 						foreach ($row as $key => $value) {
@@ -1082,7 +1085,8 @@
 					
 					switch ($tabla) {
 						case "mecanismos":
-							$query = "SELECT DISTINCT m.id, m.nombre, IFNULL(mm.en_uso, 0) AS checked 
+							$query = "SELECT DISTINCT m.id, m.nombre, IFNULL(mm.en_uso, 0) AS checked, 
+											mm.precio, mm.id AS modelo_con_mecanismo
 										FROM mecanismos AS m
 										LEFT JOIN modelos_con_mecanismo AS mm
 											ON mm.mecanismo = m.id
@@ -1098,7 +1102,13 @@
 								}
 								echo "<input type='checkbox' value='{$row['id']}' data-mecanismo='{$row['id']}' data-tabla='mecanismos' 
 										data-modelo='{$modelo}' {$checked} name='mecanismo' class='mecanismos' style='width: 10px;' {$readonly}/>";
-								echo "<label for='mecanismo' class='checkbox' style='width: 200px;'>{$row['nombre']}</label>";
+								echo "<label for='mecanismo' class='checkbox' style='width: 250px;margin-right: 10px;'>{$row['nombre']}</label>";
+								
+								$display = 'precio-mm';
+								if ($row['checked'] != 1) {
+									$display = 'precio-mm precio-hidden';
+								}
+								echo "<input tpye='number' name='precio' data-id='{$row['modelo_con_mecanismo']}' value='{$row['precio']}' class='{$display}'>";
 								echo "<br>";
 							}
 							
@@ -1164,6 +1174,17 @@
 							
 					}
 						
+					break;
+					
+				case "actualizarPrecioModeloConMecanismo":
+					$id = $_REQUEST['id'];
+					$precio = $_REQUEST['precio'];
+					
+					$query = "UPDATE modelos_con_mecanismo
+								SET precio = {$precio}
+								WHERE id = {$id}";
+					$mysqli->query($query);
+				
 					break;
 					
 				case "actualizarModeloConMecanismo":

@@ -1,5 +1,5 @@
 <?php require $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/templates/header.php'; ?>
-<?php $maestros = ['modelos', 'mecanismos', 'variaciones', 'colores', 'modelos_con_mecanismo']; ?>
+<?php $maestros = ['modelos', 'mecanismos', 'variaciones', 'colores']; ?>
 <h2>Maestros - Componentes</h2>
 
 <div class='formulario' id="formulario">
