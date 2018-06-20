@@ -1656,7 +1656,7 @@
 						echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
 					}
 					echo "</select>";
-					if ($_SESSION['tipo'] == 'admonistrador') {
+					if ($_SESSION['tipo'] == 'administrador') {
 						echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion mecanismo preview' style='width:560px; height:64px;'></textarea>";
 						echo "<input type='text' name='precio'class='innerPreview precio mecanismo preview' value='0' />";
 						echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
@@ -1714,7 +1714,7 @@
 							echo "<option value='{$id}'>{$nombre}</option>";
 						}
 						echo "</select>";
-						if ($_SESSION['tipo'] == 'admonistrador') {
+						if ($_SESSION['tipo'] == 'administrador') {
 							echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion {$tipo} preview' style='width:560px; height:64px;'></textarea>";
 							echo "<input type='text' name='precio'class='innerPreview precio {$tipo} preview' value='0' />";
 							echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
@@ -1758,7 +1758,13 @@
 						case "mecanismos":
 							$query = "UPDATE modelos_con_mecanismo
 										SET precio = {$precio}
-										WHERE id = {$id}";
+										WHERE id = {$id};";
+							$mysqli->query($query);
+							$query = "UPDATE mecanismos
+										SET descripcion = '{$descripcion}'
+										WHERE id = (SELECT mecanismo
+											FROM modelos_con_mecanismo
+											WHERE id = {$id});";
 										
 							break;
 							
@@ -1772,11 +1778,19 @@
 					}
 					
 					$mysqli->query($query);
-					
+					echo $query;
+					echo $mysqli->error;
 					
 					break;
 					
 					case "actualizarPreviewResultado":
+					
+						//print_r($_REQUEST);
+						if ($_REQUEST['modeloConMecanismo'] == '') {
+							echo "<p class='resultado'><b>Descripción: </b></p>";
+							echo "<p class='resultado'><b>Precio: </b></p>";
+							break;
+						}
 						$detalle = "";
 						$precio = 0;
 						$query = "SELECT modelos.descripcion AS desc_modelo,  

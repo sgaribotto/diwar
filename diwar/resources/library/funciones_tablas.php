@@ -119,7 +119,7 @@
 					case 'double':
 					case 'int(11)':
 						echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
-						echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}'  type='number' required/>";
+						echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}'  type='text' required/>";
 						echo "<br />";
 						break;
 						

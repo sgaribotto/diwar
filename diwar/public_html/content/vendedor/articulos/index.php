@@ -92,9 +92,9 @@ input.preview, textarea.preview, button.preview, select.preview {
 		echo "<option value='{$row['id']}'>{$row['nombre']}</option>";
 	}
 	echo "</select>";
-	if ($_SESSION['tipo'] == 'admonistrador') {
+	if ($_SESSION['tipo'] == 'administrador') {
 		echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion modelo preview' style='width:560px; height:64px;'></textarea>";
-		//echo "<input type='text' name='precio'class='innerPreview precio modelo preview' value='0' />";
+		echo "<input type='text' name='precio'class='innerPreview precio modelo preview' value='0' hidden/>";
 		echo "<button class='modeloPreview hidden preview modelo' type='submit'>Modificar</button>";
 		echo "</form>";
 	}
