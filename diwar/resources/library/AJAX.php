@@ -186,6 +186,7 @@
 										WHERE en_uso = 1";
 						$result = $mysqli->query($queryColor);
 						$tiposConColor = array();
+						$tiposConColor[] = 'tapizado';	
 						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 							$tiposConColor[] = $row['tipo'];
 						}
@@ -193,7 +194,8 @@
 						
 						if (in_array($tipo, $tiposConColor)) {
 							echo "<label class='variaciones label-color-{$tipo} colores agregar-articulo ' for='color-{$tipo}'>Color {$tipo}: </label>";
-							echo "<select class='variaciones color-{$tipo} colores agregar-articulo ' name='color-{$tipo}' required>";
+							//echo "<select class='variaciones color-{$tipo} colores agregar-articulo ' name='color-{$tipo}' required>";
+							echo "<select class='variaciones color-{$tipo} colores agregar-articulo ' name='colores[]' required>";
 							echo "<option value=''>Seleccione color de {$tipo}...</option>";
 							
 							if ($tipo != 'tapizado') {
@@ -230,7 +232,7 @@
 					
 					
 				case "agregarArticuloPresupuesto":
-				
+					
 					
 					$query = "SELECT DISTINCT tipo
 								FROM variaciones
@@ -239,7 +241,7 @@
 					$variaciones = array();
 					$result = $mysqli->query($query);
 					$informacion = array();
-					echo $mysqli->error;
+					//echo $mysqli->error;
 					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 						$tipos[] = $row['tipo'];
 					}
@@ -248,9 +250,12 @@
 						if (in_array($tipo, $tipos)) {
 							$variaciones[$tipo] = $mysqli->real_escape_string($_REQUEST[$tipo]);
 						} else {
-							$informacion[$tipo] = $mysqli->real_escape_string($_REQUEST[$tipo]);
+							$informacion[$tipo] = $_REQUEST[$tipo];
 						}
 					}
+					
+					$colores = implode(', ', $_REQUEST['colores']);
+					//echo $colores;
 					
 					if (!isset($informacion['color-tapizado'])) {
 						$informacion['color-tapizado'] = 'NULL';
@@ -267,15 +272,15 @@
 										
 					
 					$query = "INSERT INTO presupuestos
-								(variaciones, articulo, numero, cantidad, color_tapizado, color_red, color_casco, descuento_articulo) VALUES
+								(variaciones, articulo, numero, cantidad, color_tapizado, color_red, color_casco, descuento_articulo, colores) VALUES
 								('{$variaciones}', '{$informacion['mecanismo']}', '{$informacion['numero']}', 
 									'{$informacion['cantidad']}', {$informacion['color-tapizado']}, 
-									{$informacion['color-red']}, {$informacion['color-casco']}, '{$informacion['descuento_articulo']}')";
+									{$informacion['color-red']}, {$informacion['color-casco']}, '{$informacion['descuento_articulo']}', '{$colores}')";
 					
 					$mysqli->query($query);
-					//echo $query;
+					echo $query;
 					echo "<br>";
-					echo $mysqli->error;
+						echo $mysqli->error;
 					
 					break;
 					
@@ -284,7 +289,7 @@
 					$query = "SELECT DISTINCT p.id, IFNULL(a.codigo_articulo, '') AS codigo_articulo, p.variaciones, cred.nombre AS cred, 
 								ctapiz.nombre AS ctapiz, ccasco.nombre AS ccasco, 
 								p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo,
-								p.emitido
+								p.emitido, p.colores
 							FROM presupuestos AS p
 							LEFT JOIN articulos AS a
 								ON a.modelo_con_mecanismo = p.articulo
@@ -320,6 +325,21 @@
 					
 					$subtotal = 0;
 					foreach ($articulos as $id => $detalles) {
+						$coloresArticulo = array();
+						if ($detalles['colores']) {
+							$query = "SELECT tipo, nombre AS color
+										FROM colores
+										WHERE id IN ({$detalles['colores']})";
+							$result = $mysqli->query($query);
+							//echo $query;
+							//echo $mysqli->error;
+							
+							while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+								$coloresArticulo[$row['tipo']] = $row['color'];
+							}
+							//print_r($coloresArticulo);
+						}
+							
 						$detalle = "";
 						$precio = 0;
 						
@@ -341,10 +361,21 @@
 						$row = $result->fetch_array(MYSQLI_ASSOC);
 						$descrip = $row['descripcion'];
 						$detalle .= $descrip . ". ";
+						//$precio += $row['precio'];
+						
+						$query = "SELECT  precio
+									FROM modelos_con_mecanismo
+									WHERE modelo = {$detalles['modelo']}
+										AND mecanismo = {$detalles['mecanismo']};";
+						
+						$result = $mysqli->query($query);
+						$row = $result->fetch_array(MYSQLI_ASSOC);
+						//$descrip = $row['descripcion'];
+						//$detalle .= $descrip . ". ";
 						$precio += $row['precio'];
 						
 						if ($detalles['variaciones'] != '') {
-							$query = "SELECT tipo, descripcion, precio
+							$query = "SELECT tipo, descripcion, precio, nombre
 										FROM variaciones
 										WHERE id IN ({$detalles['variaciones']});";
 							$result = $mysqli->query($query);
@@ -353,7 +384,7 @@
 								if ($row['descripcion'] != '') {
 									$detalle .= $row['descripcion'] . " ";
 									$precio += $row['precio'];
-									if ($row['tipo'] == 'tapizado') {
+									/*if ($row['tipo'] == 'tapizado') {
 										$detalle .=  $detalles['ctapiz'] . ". ";
 									}
 									if ($row['tipo'] == 'red') {
@@ -361,6 +392,16 @@
 									}
 									if ($row['tipo'] == 'casco') {
 										$detalle .= $detalles['ccasco'] . ". ";
+									}*/
+									//print_r($row);
+									//print_r($coloresArticulo);
+									if (isset($coloresArticulo[$row['tipo']])) {
+										$detalle .= $coloresArticulo[$row['tipo']] . ". ";
+									} else {
+										$nombre = strtolower($row['nombre']);
+										if (isset($coloresArticulo[$nombre])) {
+											$detalle .= $coloresArticulo[$nombre] . ". ";
+										}
 									}
 								}
 							}
