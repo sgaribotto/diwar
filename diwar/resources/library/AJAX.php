@@ -181,8 +181,17 @@
 						
 							
 						echo "</select>";
+						$queryColor = "SELECT DISTINCT tipo
+										FROM colores
+										WHERE en_uso = 1";
+						$result = $mysqli->query($queryColor);
+						$tiposConColor = array();
+						while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+							$tiposConColor[] = $row['tipo'];
+						}
+						//print_r($tiposConColor);
 						
-						if (in_array($tipo, ['tapizado', 'red', 'casco'])) {
+						if (in_array($tipo, $tiposConColor)) {
 							echo "<label class='variaciones label-color-{$tipo} colores agregar-articulo ' for='color-{$tipo}'>Color {$tipo}: </label>";
 							echo "<select class='variaciones color-{$tipo} colores agregar-articulo ' name='color-{$tipo}' required>";
 							echo "<option value=''>Seleccione color de {$tipo}...</option>";
