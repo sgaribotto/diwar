@@ -121,7 +121,7 @@ input.precio-hidden {
 			$('div.' + tipo).load(url, {'tabla': tabla, 'tipo': tipo, 'modelo': modelo, 'modeloConMecanismo': modeloConMecanismo}, function() {
 				
 				$('input.variaciones:checkbox').off();
-				$('input.variaciones:checkbox').change(function() {
+				$('input.variaciones:checkbox').on('change', function() {
 					
 					var modeloConMecanismo = $(this).data('modeloconmecanismo');
 					var variacion = $(this).data('variacion');
@@ -136,7 +136,7 @@ input.precio-hidden {
 				});
 				
 				$('input.mecanismos:checkbox').off();
-				$('input.mecanismos:checkbox').change(function() {
+				$('input.mecanismos:checkbox').on('change',function() {
 					//alert('test');
 					//$(this).next('input').toggleClass('precio-hidden');
 					var modelo = $(this).data('modelo');
@@ -150,7 +150,7 @@ input.precio-hidden {
 					}
 					var url = "../../../../resources/library/AJAX.php?act=actualizarModeloConMecanismo";
 					$.post(url, {"modelo": modelo, "mecanismo": mecanismo, "en_uso": en_uso }, function(data) {
-						$('select.modeloConMecanismo').change();
+						$('select.modeloConMecanismo').first().change();
 					});
 					
 					
@@ -167,10 +167,11 @@ input.precio-hidden {
 				});
 				
 				$('select.modeloConMecanismo').off();
-				$('select.modeloConMecanismo').change(function() {
+				$('select.modeloConMecanismo').on('change',function() {
 					
 					var modeloConMecanismo = $(this).val();
 					$('div.variaciones').each( function(index) {
+						//console.log(index);
 						//console.log($(this).data('tabla'));
 						var tabla = $(this).data('tabla');
 						var tipo = $(this).data('tipo');

@@ -1212,9 +1212,11 @@
 									if ($row['checked'] == 1) {
 										$checked = 'checked';
 									}
+									
+									
 									echo "<input type='checkbox' value='{$row['id']}' data-variacion='{$row['id']}' data-tabla='variaciones' 
 											data-tipo='{$tipo}' {$checked} name='mecanismo' class='variaciones' 
-											data-modeloconmecanismo='{$modeloConMecanismo}' style='width: 10px;' {$readonly}/>";
+											data-modeloconmecanismo='{$modeloConMecanismo}' style='width: 10px;' {$disabled}/>";
 									echo "<label for='mecanismo' class='checkbox' style='width: 200px;'>{$row['nombre']}</label>";
 									echo "<br>";
 								}
