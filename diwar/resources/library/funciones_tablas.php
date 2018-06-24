@@ -216,6 +216,16 @@ function armarFormularioSecundario($mysqli, $tabla, $reference, $id = 'nuevo') {
 		//print_r($campos);
 		$excluir = ['id', 'en_uso', 'clave', $reference];
 		
+		$constraints = array(
+			'vendedor' => array('value' => 'id',
+									'text' => 'nombre',
+									'table' => 'vendedores'),
+			'cliente' => array('value' => 'id',
+									'text' => 'nombre',
+									'table' => 'clientes'),
+		);
+							
+		
 		//print_r($campos);
 		//print_r($excluir);
 		foreach ($campos as $key => $detalles) {
@@ -223,48 +233,66 @@ function armarFormularioSecundario($mysqli, $tabla, $reference, $id = 'nuevo') {
 			if (!in_array($detalles['Field'], $excluir)) {
 				
 				$label = ucfirst(str_replace('_', ' ', $detalles['Field']));
-				switch ($detalles['Type']) {
-					case 'varchar(255)':
+				if (!isset($constraints[$detalles['Field']])) {
+					switch ($detalles['Type']) {
 						
-						echo "<label for='{$detalles['Field']}' class='text {$detalles['Field']}'>{$label}: </label>";
-						if ($detalles['Field'] != 'descripcion') {
-						echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' maxlength='255' type='text' required />";
-						} else {
-							echo "<textarea name='{$detalles['Field']}' placeholder='descripción del producto...' maxlength='254' >{$detalles['Default']}</textarea>";
-						}
-						echo "<br />";
-						break;
-					case 'text':
 						
-						echo "<label for='{$detalles['Field']}' class='text {$detalles['Field']}'>{$label}: </label>";
-						echo "<textarea name='{$detalles['Field']}' placeholder='Observaciones...'>{$detalles['Default']}</textarea>";
+						case 'varchar(255)':
+							
+							echo "<label for='{$detalles['Field']}' class='text {$detalles['Field']}'>{$label}: </label>";
+							if ($detalles['Field'] != 'descripcion') {
+							echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' maxlength='255' type='text' required />";
+							} else {
+								echo "<textarea name='{$detalles['Field']}' placeholder='descripción del producto...' maxlength='254' >{$detalles['Default']}</textarea>";
+							}
+							echo "<br />";
+							break;
+						case 'text':
+							
+							echo "<label for='{$detalles['Field']}' class='text {$detalles['Field']}'>{$label}: </label>";
+							echo "<textarea name='{$detalles['Field']}' placeholder='Observaciones...'>{$detalles['Default']}</textarea>";
+							
+							echo "<br />";
+							break;
+							
+						case 'double':
+						case 'int(11)':
+							echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
+							echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}'  type='number' required/>";
+							echo "<br />";
+							break;
+							
+						case "tinyint(4)":
+							echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
+							$checked = '';
+							if ($detalles['Default'] == 1) {
+								$checked = 'checked';
+							}
+							echo "<input class='checkbox {$detalles['Field']}' name='{$detalles['Field']}' type='checkbox' {$checked} />";
+							echo "<br />";
+							break;
+							break;
 						
-						echo "<br />";
-						break;
-						
-					case 'double':
-					case 'int(11)':
-						echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
-						echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}'  type='number' required/>";
-						echo "<br />";
-						break;
-						
-					case "tinyint(4)":
-						echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
-						$checked = '';
-						if ($detalles['Default'] == 1) {
-							$checked = 'checked';
-						}
-						echo "<input class='checkbox {$detalles['Field']}' name='{$detalles['Field']}' type='checkbox' {$checked} />";
-						echo "<br />";
-						break;
-						break;
+						default:
+							echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
+							echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' type='text' required />";
+							echo "<br />";
+							break;
+					}
+				} else {
+					echo "<label for='{$detalles['Field']}' class='select {$detalles['Field']}'>{$label}: </label>";
+					echo "<select class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' required >";
 					
-					default:
-						echo "<label for='{$detalles['Field']}' class='number {$detalles['Field']}'>{$label}: </label>";
-						echo "<input class='text {$detalles['Field']}' name='{$detalles['Field']}' value='{$detalles['Default']}' type='text' required />";
-						echo "<br />";
-						break;
+					$query = "SELECT {$constraints[$detalles['Field']]['value']} AS value, {$constraints[$detalles['Field']]['text']} AS text
+								FROM {$constraints[$detalles['Field']]['table']}
+								WHERE en_uso = 1";
+					$result = $mysqli->query($query);
+					echo $query;
+					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+						echo "<option value='{$row['value']}'>{$row['text']}</option>";
+					}
+					echo "</select>";
+					echo "<br />";
 				}
 			}
 		}
