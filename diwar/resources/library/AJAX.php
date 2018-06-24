@@ -289,7 +289,7 @@
 					$query = "SELECT DISTINCT p.id, IFNULL(a.codigo_articulo, '') AS codigo_articulo, p.variaciones, cred.nombre AS cred, 
 								ctapiz.nombre AS ctapiz, ccasco.nombre AS ccasco, 
 								p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo,
-								p.emitido, p.colores
+								p.emitido, p.colores, p.precio_a_la_emision AS precio_emitido
 							FROM presupuestos AS p
 							LEFT JOIN articulos AS a
 								ON a.modelo_con_mecanismo = p.articulo
@@ -349,7 +349,7 @@
 						$result = $mysqli->query($query);
 						$row = $result->fetch_array(MYSQLI_ASSOC);
 						$descrip = $row['descripcion'];
-						$detalle .= $descrip . ". ";
+						$detalle .= $descrip . " ";
 						$precio += $row['precio'];
 						
 						
@@ -360,7 +360,7 @@
 						$result = $mysqli->query($query);
 						$row = $result->fetch_array(MYSQLI_ASSOC);
 						$descrip = $row['descripcion'];
-						$detalle .= $descrip . ". ";
+						$detalle .= $descrip . " ";
 						//$precio += $row['precio'];
 						
 						$query = "SELECT  precio
@@ -383,18 +383,7 @@
 							while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 								if ($row['descripcion'] != '') {
 									$detalle .= $row['descripcion'] . " ";
-									$precio += $row['precio'];
-									/*if ($row['tipo'] == 'tapizado') {
-										$detalle .=  $detalles['ctapiz'] . ". ";
-									}
-									if ($row['tipo'] == 'red') {
-										$detalle .= $detalles['cred'] . ". ";
-									}
-									if ($row['tipo'] == 'casco') {
-										$detalle .= $detalles['ccasco'] . ". ";
-									}*/
-									//print_r($row);
-									//print_r($coloresArticulo);
+									
 									if (isset($coloresArticulo[$row['tipo']])) {
 										$detalle .= $coloresArticulo[$row['tipo']] . ". ";
 									} else {
@@ -404,12 +393,18 @@
 										}
 									}
 								}
+								$precio += $row['precio'];
+									
+									
+								
 							}
 						}
 						
 						$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
-						$subtotal += $precio;
 						
+						if ($detalles['precio_emitido']) {
+							$precio = $detalles['precio_emitido'];
+						}
 						
 									
 									
@@ -426,6 +421,7 @@
 						}
 						echo "</tr>";
 						
+						$subtotal += $precio;
 					}
 					
 					//$numero = $_REQUEST['numero'];

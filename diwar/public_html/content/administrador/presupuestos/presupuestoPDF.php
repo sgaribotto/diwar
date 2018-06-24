@@ -1,6 +1,8 @@
 <?php require_once $_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/diwar/resources/library/tcpdf/tcpdf.php'; ?>
 <?php 
-	$mysqli = new mysqli('localhost', 'id5714927_diwar', 'diwar', 'id5714927_diwar');
+	//$mysqli = new mysqli('localhost', 'id5714927_diwar', 'diwar', 'id5714927_diwar');
+	$mysqli = new mysqli('localhost', 'diwar', 'diwar', 'diwar');
+	
 	//ini_set('max_execution_time', 60);
 	if (isset($_REQUEST['num'])) {
 		if ($_REQUEST['num'] != 'nuevo') {
@@ -112,10 +114,10 @@ $html .= '<table class="presupuesto-nuevo encabezado" width="600" cellpadding="6
 			</tr>
 </table>';
 
-$query = "SELECT DISTINCT p.id, a.codigo_articulo, p.variaciones, cred.nombre AS cred, 
+$query = "SELECT DISTINCT p.id, IFNULL(a.codigo_articulo, '') AS codigo_articulo, p.variaciones, cred.nombre AS cred, 
 			ctapiz.nombre AS ctapiz, ccasco.nombre AS ccasco, 
 			p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo,
-			p.emitido
+			p.emitido, p.precio_a_la_emision AS precio_emitido, p.colores
 		FROM presupuestos AS p
 		LEFT JOIN articulos AS a
 			ON a.modelo_con_mecanismo = p.articulo
@@ -151,6 +153,22 @@ $html .= "</thead>";
 $html .= "<tbody>";
 
 foreach ($articulos as $id => $detalles) {
+	
+	$coloresArticulo = array();
+	if ($detalles['colores']) {
+		$query = "SELECT tipo, nombre AS color
+					FROM colores
+					WHERE id IN ({$detalles['colores']})";
+		$result = $mysqli->query($query);
+		//echo $query;
+		//echo $mysqli->error;
+		
+		while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+			$coloresArticulo[$row['tipo']] = $row['color'];
+		}
+		//print_r($coloresArticulo);
+	}
+	
 	$detalle = "";
 	$precio = 0;
 	
@@ -160,7 +178,7 @@ foreach ($articulos as $id => $detalles) {
 	$result = $mysqli->query($query);
 	$row = $result->fetch_array(MYSQLI_ASSOC);
 	$descrip = $row['descripcion'];
-	$detalle .= $descrip . ". ";
+	$detalle .= $descrip . " ";
 	$precio += $row['precio'];
 	
 	
@@ -170,38 +188,51 @@ foreach ($articulos as $id => $detalles) {
 	
 	$result = $mysqli->query($query);
 	$row = $result->fetch_array(MYSQLI_ASSOC);
-	
-	
 	$descrip = $row['descripcion'];
-	$detalle .= $descrip . ". ";
+	$detalle .= $descrip . " ";
+	//$precio += $row['precio'];
+	
+	$query = "SELECT  precio
+				FROM modelos_con_mecanismo
+				WHERE modelo = {$detalles['modelo']}
+					AND mecanismo = {$detalles['mecanismo']};";
+	
+	$result = $mysqli->query($query);
+	$row = $result->fetch_array(MYSQLI_ASSOC);
+	//$descrip = $row['descripcion'];
+	//$detalle .= $descrip . ". ";
 	$precio += $row['precio'];
-	//$detalle .= "TESTTETST";
-	//print_r($detalle);
+	
 	if ($detalles['variaciones'] != '') {
-		$query = "SELECT descripcion, precio
+		$query = "SELECT tipo, descripcion, precio, nombre
 					FROM variaciones
 					WHERE id IN ({$detalles['variaciones']});";
 		$result = $mysqli->query($query);
 		
 		while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 			if ($row['descripcion'] != '') {
-				$detalle .= $row['descripcion'] . ". ";
-				$precio += $row['precio'];
+				$detalle .= $row['descripcion'] . " ";
+				
+				if (isset($coloresArticulo[$row['tipo']])) {
+					$detalle .= $coloresArticulo[$row['tipo']] . ". ";
+				} else {
+					$nombre = strtolower($row['nombre']);
+					if (isset($coloresArticulo[$nombre])) {
+						$detalle .= $coloresArticulo[$nombre] . ". ";
+					}
+				}
 			}
+			$precio += $row['precio'];
+				
+				
+			
 		}
 	}
 	
 	$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
 	
-	
-	if ($detalles['ctapiz'] != '') {
-		$detalle .= "Tapizado color " . $detalles['ctapiz'] . ". ";
-	}
-	if ($detalles['cred'] != '') {
-		$detalle .= "Red color " . $detalles['cred'] . ". ";
-	}
-	if ($detalles['ccasco'] != '') {
-		$detalle .= "Casco color " . $detalles['ccasco'] . ". ";
+	if ($detalles['precio_emitido']) {
+		$precio = $detalles['precio_emitido'];
 	}
 				
 	
