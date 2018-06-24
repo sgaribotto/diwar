@@ -239,6 +239,7 @@ input.precio-hidden {
 							
 							$('textarea.mecanismo.descripcion.preview').text(data.descripcion);
 							$('input.precio.mecanismo.preview').val(data.precio);
+							$('input.imagen.mecanismo.preview').val(data.imagen);
 							
 							var url = "../../../../resources/library/AJAX.php?act=actualizarPreviewVariaciones";	
 							$('div.preview.variaciones').load(url, {'valor': valor}, function() {

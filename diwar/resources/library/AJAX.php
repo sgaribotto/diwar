@@ -1733,6 +1733,7 @@
 					if ($_SESSION['tipo'] == 'administrador') {
 						echo "<textarea name='descripcion' class='innerPreview descripcionModelo descripcion mecanismo preview' style='width:560px; height:64px;'></textarea>";
 						echo "<input type='text' name='precio'class='innerPreview precio mecanismo preview' value='0' />";
+						echo "<input type='text' name='imagen' class='imagen innerPreview mecanismo preview' placeholder='imagen'/>";
 						echo "<button class='modeloPreview hidden preview' type='submit'>Modificar</button>";
 						echo "</form>";
 					}
@@ -1743,7 +1744,7 @@
 					$valor = $mysqli->real_escape_string($_REQUEST['valor']);
 					
 					
-					$query = "SELECT m.id, m.nombre, mm.precio, m.descripcion
+					$query = "SELECT m.id, m.nombre, mm.precio, m.descripcion, mm.descripcion AS imagen
 								FROM modelos_con_mecanismo AS mm
 								LEFT JOIN mecanismos AS m
 									ON m.id = mm.mecanismo
@@ -1818,6 +1819,7 @@
 					$descripcion = $mysqli->real_escape_string($_REQUEST['descripcion']);
 					$precio = $mysqli->real_escape_string($_REQUEST['precio']);
 					$tabla = $mysqli->real_escape_string($_REQUEST['tabla']);
+					$imagen = $mysqli->real_escape_string($_REQUEST['imagen']);
 					$id = $_REQUEST['id'];
 					
 					switch ($tabla) {
@@ -1831,9 +1833,11 @@
 						 
 						case "mecanismos":
 							$query = "UPDATE modelos_con_mecanismo
-										SET precio = {$precio}
+										SET precio = {$precio},
+										descripcion = '{$imagen}'
 										WHERE id = {$id};";
 							$mysqli->query($query);
+							echo $query;
 							$query = "UPDATE mecanismos
 										SET descripcion = '{$descripcion}'
 										WHERE id = (SELECT mecanismo
@@ -1852,7 +1856,7 @@
 					}
 					
 					$mysqli->query($query);
-					echo $query;
+					//echo $query;
 					echo $mysqli->error;
 					
 					break;
@@ -1869,14 +1873,15 @@
 						$precio = 0;
 						$query = "SELECT modelos.descripcion AS desc_modelo,  
 										mec.descripcion AS desc_mecanismo,
-										mm.precio
+										mm.precio, mm.descripcion AS imagen
 									FROM modelos_con_mecanismo AS mm
 									LEFT JOIN modelos ON modelos.id = mm.modelo
 									LEFT JOIN mecanismos AS mec ON mec.id = mm.mecanismo
 									WHERE mm.id = {$_REQUEST['modeloConMecanismo']}";
 						$result = $mysqli->query($query);
-						
+						//echo $query;
 						$row = $result->fetch_array();
+						$imagen = $row['imagen'];
 						
 						$precio += $row['precio'];
 						$detalle .= $row['desc_modelo'] . " ";
@@ -1900,7 +1905,8 @@
 							}
 						}
 						echo "<p class='resultado'><b>Descripción: </b>{$detalle}</p>";
-						echo "<p class='resultado'><b>Precio: </b>{$precio}</p>";
+						echo "<p class='resultado'><b>Precio: </b>{$precio} <img class='imagen' src='{$imagen}' height='120'  /></p>";
+						//echo "";
 						break;
 					
 				default:
