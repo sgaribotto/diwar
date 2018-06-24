@@ -77,7 +77,11 @@
 
 <h2>Presupuesto</h2>
 <a href='../presupuestos' class='jquibutton'>Volver al listado de presupuestos</a>
-<?php echo "<a href='presupuestoPDF.php?num={$numero}' target='_blank' class='jquibutton'>PDF</a>"; ?>
+<?php 
+	if ($emitido) {
+		echo "<a href='presupuestoPDF.php?num={$numero}' target='_blank' class='jquibutton'>PDF</a>";
+	}
+?>
 <div class='presupuesto-nuevo form-container'>
 	<form class='presupuesto-nuevo' method='post' acticion='emitirpresupuesto.php'>
 		<fieldset class='presupuesto-nuevo'>
