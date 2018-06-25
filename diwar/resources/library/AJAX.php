@@ -524,6 +524,17 @@
 							
 							$result = $mysqli->query($query);
 							$row = $result->fetch_array(MYSQLI_ASSOC);
+							//$precio += $row['precio'];
+							
+							$query = "SELECT  precio
+										FROM modelos_con_mecanismo
+										WHERE modelo = {$detalles['modelo']}
+											AND mecanismo = {$detalles['mecanismo']};";
+							
+							$result = $mysqli->query($query);
+							$row = $result->fetch_array(MYSQLI_ASSOC);
+							//$descrip = $row['descripcion'];
+							//$detalle .= $descrip . ". ";
 							$precio += $row['precio'];
 							
 							if ($detalles['variaciones'] != '') {

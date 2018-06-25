@@ -116,7 +116,7 @@ $html .= '<table class="presupuesto-nuevo encabezado" width="600" cellpadding="6
 
 $query = "SELECT DISTINCT p.id, IFNULL(a.codigo_articulo, '') AS codigo_articulo, p.variaciones, cred.nombre AS cred, 
 			ctapiz.nombre AS ctapiz, ccasco.nombre AS ccasco, 
-			p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo,
+			p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo, mm.descripcion AS imagen,
 			p.emitido, p.precio_a_la_emision AS precio_emitido, p.colores
 		FROM presupuestos AS p
 		LEFT JOIN articulos AS a
@@ -134,10 +134,14 @@ $result = $mysqli->query($query);
 
 
 $articulos = array();
+$imagenes = array();
 while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 	$articulos[] = $row;
+	if ($row['imagen'] != '' and count($imagenes) < 12) {
+		$imagenes[] = $row['imagen'];
+	}
 }
-//print_r($articulos);
+
 $html .= '<table class="articulos presupuesto" cellpadding="3" cellspacing="0">';
 $html .= '<thead>';
 $html .= '<tr>';
@@ -427,6 +431,24 @@ $htmlFooter .= "</table>";
 	
 	//$html = 'regulacion de altura,  mecanismo syncrhon que  permite regular la inclinacion del respaldo,   UP-Down en la riñonera para regular  la misma Asiento multilaminado con goma espuma inyectada termoformado';
 	$pdf->writeHTML($html, true, false, true, false, '');
+	
+	/*$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';*/
+	$x = 15;
+	foreach ($imagenes as $imagen) {
+		$pdf->Image($imagen, $x, 238, 15, 20, 'JPG', $imagen, '', false, 150, '', false, false, 1, false, false, false);
+		$x += 15;
+	}
 	
 	$pdf->writeHTMLCell('', '', '', '268', $htmlFooter, 0, 0, false, "L", false, false);
 	
