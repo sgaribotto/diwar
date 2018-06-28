@@ -631,8 +631,8 @@
 									AND {$campoFiltrado} LIKE '%{$filtro}%'
 								ORDER BY {$campoFiltrado}, id";
 					$result = $mysqli->query($query);
-					echo $query;
-					echo $mysqli->error;
+					//echo $query;
+					//echo $mysqli->error;
 					$campos = array();
 					while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 						foreach ($row as $key => $value) {

@@ -3,7 +3,7 @@
 	//$mysqli = new mysqli('localhost', 'id5714927_diwar', 'diwar', 'id5714927_diwar');
 	$mysqli = new mysqli('localhost', 'diwar', 'diwar', 'diwar');
 	
-	//ini_set('max_execution_time', 60);
+	ini_set('max_execution_time', 60);
 	if (isset($_REQUEST['num'])) {
 		if ($_REQUEST['num'] != 'nuevo') {
 			$numero = $_REQUEST['num'];
@@ -54,9 +54,9 @@
 ?>
 <?php
 
-$html = "<style>";
+$htmlStyle = "<style>";
 
-$html .= "
+$htmlStyle .= "
 		table {
 			border-collapse: collapse;
 			border-collapse: collapse;
@@ -96,10 +96,10 @@ $html .= "
 ";
 		
 
-$html .= "</style>";
+$htmlStyle .= "</style>";
 
 
-$html .= '<table class="presupuesto-nuevo encabezado" width="600" cellpadding="6" cellspacing="0">
+$htmlCliente = '<table class="presupuesto-nuevo encabezado" width="600" cellpadding="6" cellspacing="0">
 			<tr class="encabezado">
 				<td class="presupuesto-nuevo cliente pdf"  width="100" align="right"><b>Cliente: </b></td>
 				<td class="fijo presupuesto-emitido cliente" width="300" align="left"> ' . $cliente . '</td>
@@ -116,7 +116,7 @@ $html .= '<table class="presupuesto-nuevo encabezado" width="600" cellpadding="6
 
 $query = "SELECT DISTINCT p.id, IFNULL(a.codigo_articulo, '') AS codigo_articulo, p.variaciones, cred.nombre AS cred, 
 			ctapiz.nombre AS ctapiz, ccasco.nombre AS ccasco, 
-			p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo,
+			p.articulo, p.cantidad, p.descuento_articulo, mm.modelo, mm.mecanismo, mm.descripcion AS imagen,
 			p.emitido, p.precio_a_la_emision AS precio_emitido, p.colores
 		FROM presupuestos AS p
 		LEFT JOIN articulos AS a
@@ -134,115 +134,157 @@ $result = $mysqli->query($query);
 
 
 $articulos = array();
+$imagenes = array();
 while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 	$articulos[] = $row;
+	if ($row['imagen'] != '' and count($imagenes) < 12) {
+		$imagenes[] = $row['imagen'];
+	}
 }
-//print_r($articulos);
-$html .= '<table class="articulos presupuesto" cellpadding="3" cellspacing="0">';
-$html .= '<thead>';
-$html .= '<tr>';
-$html .= '<th class="articulos" width="70" align="center">Artículo</th>';
-$html .= '<th class="articulos" width="370" align="left">Detalle</th>';
-$html .= '<th class="articulos" width="70" align="center">Cantidad</th>';
-$html .= '<th class="articulos" width="70" align="center">Desc.</th>';
-$html .= '<th class="articulos" width="70" align="center">Precio</th>';
-//$html .= "<th class='articulos'></th>";
-$html .= "</tr>";
-$html .= "</thead>";
-//$html .= "</table>";
-$html .= "<tbody>";
 
-foreach ($articulos as $id => $detalles) {
-	
-	$coloresArticulo = array();
-	if ($detalles['colores']) {
-		$query = "SELECT tipo, nombre AS color
-					FROM colores
-					WHERE id IN ({$detalles['colores']})";
-		$result = $mysqli->query($query);
-		//echo $query;
-		//echo $mysqli->error;
-		
-		while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			$coloresArticulo[$row['tipo']] = $row['color'];
-		}
-		//print_r($coloresArticulo);
+$tableHeader = '<table class="articulos presupuesto" cellpadding="3" cellspacing="0">';
+$tableHeader .= '<thead>';
+$tableHeader .= '<tr>';
+$tableHeader .= '<th class="articulos" width="70" align="center">Artículo</th>';
+$tableHeader .= '<th class="articulos" width="370" align="left">Detalle</th>';
+$tableHeader .= '<th class="articulos" width="70" align="center">Cantidad</th>';
+$tableHeader .= '<th class="articulos" width="70" align="center">Desc.</th>';
+$tableHeader .= '<th class="articulos" width="70" align="center">Precio</th>';
+//$html .= "<th class='articulos'></th>";
+$tableHeader .= "</tr>";
+$tableHeader .= "</thead>";
+//$html .= "</table>";
+$tableHeader .= "<tbody>";
+
+$cantidadArticulos = count($articulos);
+$articulosPrimeraPagina = 7;
+$articulosPorPagina = 9;
+
+if ($cantidadArticulos > 9) {
+	$articulosPrimeraPagina = 9;
+}
+
+$cantidadPaginas = 1;
+$agregarPaginas = 0;
+if ($cantidadArticulos > $articulosPrimeraPagina) {
+	$agregarPaginas = ceil(($cantidadArticulos - $articulosPrimeraPagina) / $articulosPorPagina);
+}	
+
+$cantidadPaginas += $agregarPaginas;
+$html = array();
+//foreach ($articulos as $id => $detalles) {
+for ($i = 1; $i <= $cantidadPaginas; $i++) {
+	if ($i == $cantidadPaginas) {
+		$fin = $cantidadArticulos - 1;
+	} else {
+		$fin = ($articulosPrimeraPagina - 1) + (($i - 1) * $articulosPorPagina);
+	}
+	if ($i == 1) {
+		$inicio = 0;
+	} else {
+		$inicio = ($articulosPrimeraPagina) + (($i - 2) * $articulosPorPagina);
 	}
 	
-	$detalle = "";
-	$precio = 0;
+	$html[$i] = "";
+	/*echo $inicio;
+	echo "<br>";
+	echo $fin;*/
 	
-	$query = "SELECT descripcion, precio
-				FROM modelos
-				WHERE id = {$detalles['modelo']};";
-	$result = $mysqli->query($query);
-	$row = $result->fetch_array(MYSQLI_ASSOC);
-	$descrip = $row['descripcion'];
-	$detalle .= $descrip . " ";
-	$precio += $row['precio'];
+	for ($j = $inicio; $j <= $fin; $j++) {
+		$detalles = $articulos[$j];
 	
 	
-	$query = "SELECT descripcion, precio
-				FROM mecanismos
-				WHERE id = {$detalles['mecanismo']};";
-	
-	$result = $mysqli->query($query);
-	$row = $result->fetch_array(MYSQLI_ASSOC);
-	$descrip = $row['descripcion'];
-	$detalle .= $descrip . " ";
-	//$precio += $row['precio'];
-	
-	$query = "SELECT  precio
-				FROM modelos_con_mecanismo
-				WHERE modelo = {$detalles['modelo']}
-					AND mecanismo = {$detalles['mecanismo']};";
-	
-	$result = $mysqli->query($query);
-	$row = $result->fetch_array(MYSQLI_ASSOC);
-	//$descrip = $row['descripcion'];
-	//$detalle .= $descrip . ". ";
-	$precio += $row['precio'];
-	
-	if ($detalles['variaciones'] != '') {
-		$query = "SELECT tipo, descripcion, precio, nombre
-					FROM variaciones
-					WHERE id IN ({$detalles['variaciones']});";
-		$result = $mysqli->query($query);
 		
-		while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-			if ($row['descripcion'] != '') {
-				$detalle .= $row['descripcion'] . " ";
-				
-				if (isset($coloresArticulo[$row['tipo']])) {
-					$detalle .= $coloresArticulo[$row['tipo']] . ". ";
-				} else {
-					$nombre = strtolower($row['nombre']);
-					if (isset($coloresArticulo[$nombre])) {
-						$detalle .= $coloresArticulo[$nombre] . ". ";
+		$coloresArticulo = array();
+		if ($detalles['colores']) {
+			$query = "SELECT tipo, nombre AS color
+						FROM colores
+						WHERE id IN ({$detalles['colores']})";
+			$result = $mysqli->query($query);
+			//echo $query;
+			//echo $mysqli->error;
+			
+			while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+				$coloresArticulo[$row['tipo']] = $row['color'];
+			}
+			//print_r($coloresArticulo);
+		}
+		
+		$detalle = "";
+		$precio = 0;
+		
+		$query = "SELECT descripcion, precio
+					FROM modelos
+					WHERE id = {$detalles['modelo']};";
+		$result = $mysqli->query($query);
+		$row = $result->fetch_array(MYSQLI_ASSOC);
+		$descrip = $row['descripcion'];
+		$detalle .= $descrip . " ";
+		$precio += $row['precio'];
+		
+		
+		$query = "SELECT descripcion, precio
+					FROM mecanismos
+					WHERE id = {$detalles['mecanismo']};";
+		
+		$result = $mysqli->query($query);
+		$row = $result->fetch_array(MYSQLI_ASSOC);
+		$descrip = $row['descripcion'];
+		$detalle .= $descrip . " ";
+		//$precio += $row['precio'];
+		
+		$query = "SELECT  precio
+					FROM modelos_con_mecanismo
+					WHERE modelo = {$detalles['modelo']}
+						AND mecanismo = {$detalles['mecanismo']};";
+		
+		$result = $mysqli->query($query);
+		$row = $result->fetch_array(MYSQLI_ASSOC);
+		//$descrip = $row['descripcion'];
+		//$detalle .= $descrip . ". ";
+		$precio += $row['precio'];
+		
+		if ($detalles['variaciones'] != '') {
+			$query = "SELECT tipo, descripcion, precio, nombre
+						FROM variaciones
+						WHERE id IN ({$detalles['variaciones']});";
+			$result = $mysqli->query($query);
+			
+			while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+				if ($row['descripcion'] != '') {
+					$detalle .= $row['descripcion'] . " ";
+					
+					if (isset($coloresArticulo[$row['tipo']])) {
+						$detalle .= $coloresArticulo[$row['tipo']] . ". ";
+					} else {
+						$nombre = strtolower($row['nombre']);
+						if (isset($coloresArticulo[$nombre])) {
+							$detalle .= $coloresArticulo[$nombre] . ". ";
+						}
 					}
 				}
+				$precio += $row['precio'];
+					
+					
+				
 			}
-			$precio += $row['precio'];
-				
-				
-			
 		}
+		
+		$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
+		
+		if ($detalles['precio_emitido']) {
+			$precio = $detalles['precio_emitido'];
+		}
+					
+		
+		$html[$i] .= '<tr class="presupuesto articulos">';
+		$html[$i] .= '<td class="articulos" width="70" align="center" valign="middle">' . $detalles["codigo_articulo"] . '</td>';
+		$html[$i] .= '<td class="articulos" width="370" align="left">' . $detalle . '</td>';
+		$html[$i] .= '<td class="articulos cantidad" width="70" align="center" valign="middle">' . $detalles["cantidad"] . '</td>';
+		$html[$i] .= '<td class="articulos cantidad" width="70" align="center" valign="middle">' . $detalles["descuento_articulo"] . '%</td>';
+		$html[$i] .= '<td class="articulos precio" width="70" align="center" valign="middle">$ ' . $precio . '</td>';
+		$html[$i] .= '</tr>';
 	}
-	
-	$precio = $precio * (1 - $detalles['descuento_articulo'] / 100);
-	
-	if ($detalles['precio_emitido']) {
-		$precio = $detalles['precio_emitido'];
-	}
-				
-	
-	$html .= '<tr class="presupuesto articulos">';
-	$html .= '<td class="articulos" width="70" align="center" valign="middle">' . $detalles["codigo_articulo"] . '</td>';
-	$html .= '<td class="articulos" width="370" align="left">' . $detalle . '</td>';
-	$html .= '<td class="articulos cantidad" width="70" align="center" valign="middle">' . $detalles["cantidad"] . '</td>';
-	$html .= '<td class="articulos cantidad" width="70" align="center" valign="middle">' . $detalles["descuento_articulo"] . '%</td>';
-	$html .= '<td class="articulos precio" width="70" align="center" valign="middle">$ ' . $precio . '</td>';
-	$html .= '</tr>';
 }
 
 //echo $html;
@@ -259,74 +301,74 @@ $total = $subtotalSinIva + $iva;
 
 
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="2" align="right"></td>';
-$html .= '<td class="titulo-subtotal subtotales" colspan="2" align="right">Subtotal</td>';
-$html .= '<td class="subtotal subtotales" >$ ' . $subtotal . '</td>';
-$html .= '</tr>';
+$htmlTotales = '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="2" align="right"></td>';
+$htmlTotales .= '<td class="titulo-subtotal subtotales" colspan="2" align="right">Subtotal</td>';
+$htmlTotales .= '<td class="subtotal subtotales" >$ ' . $subtotal . '</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="2" align="right"></td>';
-$html .= '<td class="titulo-subtotal subtotales embalaje" colspan="2" align="right" >Embalaje ' . $datosPresupuesto["embalaje"] . '%</td>';
-$html .= '<td class="subtotal subtotales embalaje" >$ ' . $embalaje . '</td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="2" align="right"></td>';
+$htmlTotales .= '<td class="titulo-subtotal subtotales embalaje" colspan="2" align="right" >Embalaje ' . $datosPresupuesto["embalaje"] . '%</td>';
+$htmlTotales .= '<td class="subtotal subtotales embalaje" >$ ' . $embalaje . '</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="2" align="right"></td>';
-$html .= '<td class="titulo-subtotal subtotales descuento" colspan="2" align="right">Descuento ' . $datosPresupuesto["descuento"] . '%</td>';
-$html .= '<td class="subtotal subtotales embalaje" >$ ' . $descuento . '</td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="2" align="right"></td>';
+$htmlTotales .= '<td class="titulo-subtotal subtotales descuento" colspan="2" align="right">Descuento ' . $datosPresupuesto["descuento"] . '%</td>';
+$htmlTotales .= '<td class="subtotal subtotales embalaje" >$ ' . $descuento . '</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="2" align="right"></td>';
-$html .= '<td class="titulo-subtotal subtotales" colspan="2" align="right">Subtotal</td>';
-$html .= '<td class="subtotal subtotales" >$ ' . $subtotalSinIva . '</td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="2" align="right"></td>';
+$htmlTotales .= '<td class="titulo-subtotal subtotales" colspan="2" align="right">Subtotal</td>';
+$htmlTotales .= '<td class="subtotal subtotales" >$ ' . $subtotalSinIva . '</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="2" align="right"></td>';
-$html .= '<td class="titulo-subtotal subtotales descuento" colspan="2" align="right">IVA ' . $datosPresupuesto["iva"] . '%</td>';
-$html .= '<td class="subtotal subtotales embalaje" >$ ' . $iva . '</td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="2" align="right"></td>';
+$htmlTotales .= '<td class="titulo-subtotal subtotales descuento" colspan="2" align="right">IVA ' . $datosPresupuesto["iva"] . '%</td>';
+$htmlTotales .= '<td class="subtotal subtotales embalaje" >$ ' . $iva . '</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="2" align="right"></td>';
-$html .= '<td class="titulo-subtotal subtotales" colspan="2" align="right" >Total</td>';
-$html .= '<td class="subtotal subtotales" >$ ' . $total . '</td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="2" align="right"></td>';
+$htmlTotales .= '<td class="titulo-subtotal subtotales" colspan="2" align="right" >Total</td>';
+$htmlTotales .= '<td class="subtotal subtotales" >$ ' . $total . '</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="blanco" colspan="5" align="right"></td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="blanco" colspan="5" align="right"></td>';
+$htmlTotales .= '</tr>';
 
 if ($datosPresupuesto['condicion'] != 'Otro') {
-	$html .= '<tr class="subtotales">';
-	$html .= '<td class="condicion inicial" colspan="5" align="left"><b>Condición: </b>' . $datosPresupuesto['condicion'] . '</td>';
-	$html .= '</tr>';
+	$htmlTotales .= '<tr class="subtotales">';
+	$htmlTotales .= '<td class="condicion inicial" colspan="5" align="left"><b>Condición: </b>' . $datosPresupuesto['condicion'] . '</td>';
+	$htmlTotales .= '</tr>';
 }
 
 $observaciones = '';
 if ($datosPresupuesto['observaciones'] != '') {
 	$observaciones = $datosPresupuesto['observaciones'];
 }
-	$html .= '<tr class="subtotales">';
-	$html .= '<td class="observaciones" colspan="5" align="left"><b>Observaciones:</b>' . $observaciones . '</td>';
-	$html .= '</tr>';
+	$htmlTotales .= '<tr class="subtotales">';
+	$htmlTotales .= '<td class="observaciones" colspan="5" align="left"><b>Observaciones:</b>' . $observaciones . '</td>';
+	$htmlTotales .= '</tr>';
 
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="observaciones" colspan="5" align="left"> - Todos los importes están expresados en Pesos.</td>';
-$html .= '</tr>';
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="observaciones" colspan="5" align="left"> - Todos los importes están expresados en Pesos.</td>';
+$htmlTotales .= '</tr>';
 
-$html .= '<tr class="subtotales">';
-$html .= '<td class="final observaciones" colspan="5" align="left"> - Validez: 15 días desde la fecha de emisión.</td>';
-$html .= '</tr>';
-
-
+$htmlTotales .= '<tr class="subtotales">';
+$htmlTotales .= '<td class="final observaciones" colspan="5" align="left"> - Validez: 15 días desde la fecha de emisión.</td>';
+$htmlTotales .= '</tr>';
 
 
-$html .= "</tbody>";
-$html .= "</table>";
+
+
+$htmlCierre = "</tbody>";
+$htmlCierre .= "</table>";
 
 $htmlFooter = '<table><tbody>';
 $htmlFooter .= '<tr class="subtotales">';
@@ -426,7 +468,49 @@ $htmlFooter .= "</table>";
 	$pdf->AddPage();
 	
 	//$html = 'regulacion de altura,  mecanismo syncrhon que  permite regular la inclinacion del respaldo,   UP-Down en la riñonera para regular  la misma Asiento multilaminado con goma espuma inyectada termoformado';
-	$pdf->writeHTML($html, true, false, true, false, '');
+	//$pdf->writeHTML($htmlStyle, true, false, true, false, '');
+	$pdf->writeHTML($htmlStyle . $htmlCliente, true, false, true, false, '');
+	
+	
+	foreach ($html as $pagina => $contenido) {
+		
+		$imprimir = $htmlStyle . $tableHeader;
+		$imprimir .= $contenido;
+		
+		
+		if ($pagina == $cantidadPaginas) {
+			$imprimir .= $htmlTotales;
+			//$pdf->writeHTML($htmlTotales, true, false, true, false, '');
+		}
+		//$pdf->writeHTML($htmlCierre, true, false, true, false, '');
+		$imprimir .= $htmlCierre;
+		
+		
+		$pdf->writeHTML($imprimir, true, false, true, false, '');
+		if ($pagina < $cantidadPaginas) {
+			$pdf->AddPage();
+		}
+	}
+		
+	
+	
+	/*$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/4844/producto-300-460x580-1.jpg';
+	$imagenes[] = 'http://www.diwar.com.ar/site/assets/files/5172/miro_perfil.jpg';*/
+	$x = 15;
+	foreach ($imagenes as $imagen) {
+		$pdf->Image($imagen, $x, 248, 15, 20, 'JPG', $imagen, '', false, 150, '', false, false, 1, false, false, false);
+		$x += 15;
+	}
 	
 	$pdf->writeHTMLCell('', '', '', '268', $htmlFooter, 0, 0, false, "L", false, false);
 	
