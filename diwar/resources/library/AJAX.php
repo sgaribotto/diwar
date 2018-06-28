@@ -1457,7 +1457,7 @@
 							if (!$emitido) {
 								echo "<select class='presupuesto clientes' name='clientes'>";
 								echo "<option value=''>Seleccione cliente</option>";
-								$query = "SELECT c.id, c.nombre
+								$query = "SELECT DISTINCT c.id, c.nombre
 									FROM clientes AS c
 									LEFT JOIN clientes_vendedores AS v
 										ON v.cliente = c.id
@@ -1491,8 +1491,18 @@
 								$query = "REPLACE INTO datos_presupuesto
 											SET CLIENTE = {$cliente},
 												vendedor = {$vendedor},
-												numero = {$numero}";
+												numero = {$numero},
+												tipo_factura = (SELECT tipo_factura FROM clientes WHERE id = {$cliente}),
+												condicion = 'contado',
+												direccion_entrega = (SELECT id 
+																		FROM direcciones_entrega 
+																		WHERE cliente = {$cliente} 
+																			AND en_uso = 1 
+																		ORDER BY es_default DESC, id 
+																		LIMIT 1)";
 								$mysqli->query($query);
+								//echo $mysqli->error;
+								//echo $query;
 							}									
 							//TRAER LOS OPTIONS DE LOS DATOS
 							
@@ -1500,19 +1510,21 @@
 							echo "<label class='presupuesto-nuevo' for='direccionEntrega'>Dirección de entrega: </label>";
 							if (!$emitido) {
 								echo "<select class='presupuesto datos-presupuesto' name='direccionEntrega' data-campo='direccion_entrega'>";
+								echo "<option value=''>Seleccione Dirección de entrega</option>";
 								$query = "SELECT id, direccion, es_default
 											FROM direcciones_entrega
 											WHERE en_uso = 1
-												AND cliente = {$cliente}";
+												AND cliente = {$cliente}
+											ORDER BY es_default DESC, id";
 								//echo $query;
 								print_r($datosPresupuesto);
 								$result = $mysqli->query($query);
 								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 									$selected = '';
 									if ($datosPresupuesto['direccion_entrega'] == '') {
-										if ($row['es_default'] == 1) {
+										/*if ($row['es_default'] == 1) {
 											$selected = 'selected';
-										}
+										}*/
 									} else {
 										if ($row['id'] == $datosPresupuesto['direccion_entrega']) {
 											$selected = 'selected';
@@ -1574,6 +1586,7 @@
 							echo "<label class='presupuesto-nuevo datos-presupuesto' for='tipoFactura'>Tipo de factura: </label>";
 							if (!$emitido) {
 							echo "<select class='presupuesto datos-presupuesto' name='tipoFactura' data-campo='tipo_factura'>";
+							echo "<option value=''>Seleccione tipo de factura</option>";
 								foreach (['A', 'B', 'C', 'Otro'] as $factura) {
 									$selected = '';
 									
