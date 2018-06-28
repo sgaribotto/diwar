@@ -186,8 +186,8 @@
 		if ($id != 'nuevo') {
 			$textoBoton = "Modificar";
 		}
-		echo "<button type='submit' class='formulario submit agregarMaestro' data-id='{$id}'>{$textoBoton}</button>";
-		echo "<button type='button' class='formulario limpiar'>Nuevo</button>";
+		echo "<button type='submit' class='formulario submit agregarMaestro {$tabla}' data-id='{$id}'>{$textoBoton}</button>";
+		echo "<button type='button' class='formulario limpiar nuevo maestro {$tabla}'>Nuevo</button>";
 		
 		return 0;
 	}
@@ -303,7 +303,7 @@ function armarFormularioSecundario($mysqli, $tabla, $reference, $id = 'nuevo') {
 			$textoBoton = "Modificar";
 		}
 		echo "<button type='submit' class='formulario submit agregarSecundario {$tabla}' data-id='{$id}'>{$textoBoton}</button>";
-		echo "<button type='button' class='formulario limpiar'>Limpiar Formulario</button>";
+		echo "<button type='button' class='formulario limpiar secundario'>Limpiar Formulario</button>";
 		
 		return 0;
 	}

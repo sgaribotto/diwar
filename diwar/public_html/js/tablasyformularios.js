@@ -23,9 +23,17 @@ function actualizarFormularioMaestro(maestro, id) {
 			$('button').button();
 		});
 		
+		
+		$('button.nuevo.clientes').click(function() {
+			//alert('click');
+			location.assign('cliente.php?id=nuevo');
+		});
+		
 		$('button.limpiar').click(function() {
 			$('select.maestro').change();
 		});
+		
+		
 		
 		$('input.cuit').change(function() {
 			var cuit = $(this).val();
@@ -37,6 +45,9 @@ function actualizarFormularioMaestro(maestro, id) {
 				}
 			});
 		});
+		
+		
+		
 		
 		
 	});

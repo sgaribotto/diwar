@@ -33,13 +33,19 @@
 		echo "<a href='../clientes' class='jquibutton'>Volver</a>";
 	}	
 	
-	$tablas = array(
-		'clientes' => 'Cliente',
-		'contactos' => "Contactos", 
-		'direcciones_entrega' => "Direcciones de entrega", 
-	);
-	if ($_SESSION['tipo'] == 'administrador') {
-		$tablas['clientes_vendedores'] = "Vendedores";
+	if ($id != 'nuevo') {
+		$tablas = array(
+			'clientes' => 'Cliente',
+			'contactos' => "Contactos", 
+			'direcciones_entrega' => "Direcciones de entrega", 
+		);
+		if ($_SESSION['tipo'] == 'administrador') {
+			$tablas['clientes_vendedores'] = "Vendedores";
+		}
+	} else {
+		$tablas = array(
+			'clientes' => 'Cliente',
+			);
 	}
 	//print_r($tablas);
 	echo "<div class='tabs'>";
@@ -86,6 +92,8 @@
 		var maestro = $('h2.maestro').data('maestro');
 		var id = $('h2.maestro').data('id');
 		actualizarFormularioMaestro(maestro, id);
+		//$('button.limpiar').off();
+		
 		
 		$('form.agregarMaestro').submit(function(event) {
 			event.preventDefault();
@@ -102,6 +110,8 @@
 					alert('Error inesperado' + data.error.numero);
 				} else {
 					alert('Se ha agregado un nuevo cliente');
+					
+					location.assign('cliente.php?id=' + data.id);
 				}
 			});
 		});
@@ -125,7 +135,7 @@
 				});*/
 				
 				/*$('button.limpiar').click(function() {
-					$('select.maestro').change();
+					//location.assign('cliente.php?id=nuevo');
 				});*/
 			});
 		}
@@ -231,6 +241,8 @@
 		
 		
 		$( "div.tabs" ).tabs();
+		
+		
 		
 				
 	});
