@@ -327,12 +327,16 @@
 						}
 					  },*/
 					  close: function() {
-						location.reload();
+							//var clienteSeleccionado = $('select.clientes').val();
+							//$('select.clientes').val('');
+							//$('select.clientes').val(clienteSeleccionado);
+							//actualizarOptionsDatosPresupuesto('datos_presupuesto');
+							location.reload();
 					  }
 					});
 					
 					$('button.ABMcliente').click(function() {
-						var id = $('select,clientes').val() || 'nuevo';
+						var id = $('select.clientes').val() || 'nuevo';
 						var url = '../clientes/cliente.php?dialog=true&id=' + id; // + " #container";
 						
 						$('div.ABMcliente').load(url, function() {
