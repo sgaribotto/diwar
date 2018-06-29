@@ -1517,7 +1517,7 @@
 												AND cliente = {$cliente}
 											ORDER BY es_default DESC, id";
 								//echo $query;
-								print_r($datosPresupuesto);
+								//print_r($datosPresupuesto);
 								$result = $mysqli->query($query);
 								while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 									$selected = '';
@@ -1595,7 +1595,7 @@
 											$selected = 'selected';
 										}
 									} else {
-										if ($tipoFactura == $datosPresupuesto['tipo_factura']) {
+										if ($factura == $datosPresupuesto['tipo_factura']) {
 											$selected = 'selected';
 										}
 									}

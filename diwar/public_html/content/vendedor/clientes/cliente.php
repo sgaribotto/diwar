@@ -4,12 +4,12 @@
 	if (isset($_REQUEST['dialog'])) {
 
 ?>
-	<style>
+	<<style>
 	div.header {
 		display: none;
 	}
 	</style>
-	<?php } ?>
+<?php } ?>
 	
 <?php 
 	$id = 'nuevo';
@@ -29,9 +29,12 @@
 	echo "<h2 class='formulario edicion {$maestro} maestro' data-maestro='{$maestro}' data-id='{$id}' data-reference='{$reference}' >
 		Cliente Nuevo
 	</h2>";
-	if (!$dialog) {
+	if (!$dialog and !isset($_REQUEST['presupuesto'])) {
 		echo "<a href='../clientes' class='jquibutton'>Volver</a>";
-	}	
+	}
+	if (isset($_REQUEST['presupuesto'])) {
+		echo "<a href='../presupuestos/presupuesto.php?num={$_REQUEST['presupuesto']}' class='jquibutton'>Volver al presupuesto</a>";
+	}
 	
 	if ($id != 'nuevo') {
 		$tablas = array(

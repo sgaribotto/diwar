@@ -263,14 +263,18 @@
 						var url = "../../../../resources/library/AJAX.php?act=optionsDatosPresupuesto";
 						$('span.' + campo).load(url, {'campo': campo, 'vendedor': vendedor,'numero': numero, 'cambioCliente': cliente}, function() {
 							
+							var cliente = $('select.clientes').val() || 0;
+							
 							$('select.clientes').change(function() {
 								cliente = $(this).val();
 								actualizarOptionsDatosPresupuesto('datos_presupuesto');
-								if (cliente == 'nuevo' || cliente == '') {
+								if (cliente == 'nuevo' || cliente == '' || cliente == 0) {
 									$('button.ABMcliente').text('Agregar');
 								} else {
 									$('button.ABMcliente').text('Modificar');
 								}
+								
+								
 							})
 							
 							$('select.datos-presupuesto, input.datos-presupuesto, textarea.datos-presupuesto').change(function() {
@@ -294,6 +298,12 @@
 									
 								});
 							});
+							console.log(cliente);
+							if (cliente == 'nuevo' || cliente == '' || cliente == 0) {
+								$('button.ABMcliente').text('Agregar');
+							} else {
+								$('button.ABMcliente').text('Modificar');
+							}
 							
 						});
 						
@@ -336,13 +346,15 @@
 					});
 					
 					$('button.ABMcliente').click(function() {
+						var numero = $('input.numero').val();
 						var id = $('select.clientes').val() || 'nuevo';
-						var url = '../clientes/cliente.php?dialog=true&id=' + id; // + " #container";
-						
-						$('div.ABMcliente').load(url, function() {
+						//var url = '../clientes/cliente.php?dialog=true&id=' + id; // + " #container";
+						var url = '../clientes/cliente.php?presupuesto=' + numero + '&id=' + id; // + " #container";
+						location.assign(url);
+						/*$('div.ABMcliente').load(url, function() {
 							//alert(url);
 							$('div.dialog').dialog( "open" );
-						});
+						});*/
 						
 						
 					});
