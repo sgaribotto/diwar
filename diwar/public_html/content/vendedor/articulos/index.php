@@ -78,8 +78,20 @@ input.precio-hidden {
 	echo "<div class='tab' id='preview' data-tabla='' data-tipo=''>";
 	echo "<div class='resultado'>";
 	echo "<p class='resultado'><b>Descripción: </b></p>";
-						echo "<p class='resultado'><b>Precio: </b></p>";
-	echo "</div>
+	echo "<p class='resultado'><b>Precio: </b></p>";
+	
+	echo "</div>";
+	echo "<form method='post' action='#' class='codigo-articulo'>";
+	echo "<label for class='resultado'>Código artículo:</label>";
+	
+	$readonly = 'readonly';
+	if ($_SESSION['tipo'] == 'administrador') {
+		$readonly = '';
+	}
+	echo "<input type='text' name='codigoArticulo' placeholder='Código del artículo' class='codigo-articulo' {$readonly}>";
+	echo "<button class='codigo-articulo jquibutton' type='submit'>Cambiar código</button>";
+	echo "</form>";
+	echo "
 			<div class='modelo preview'>
 			
 			<form class='preview' data-tipo='modelo'>
@@ -302,12 +314,48 @@ input.precio-hidden {
 			});
 			variaciones += '0';
 			
+			
+			
+			
 			$('div.resultado').load(url, {"modeloConMecanismo": modeloConMecanismo, "variaciones": variaciones}, function() { 
+				
 			});
+			
+			var variaciones = [];
+			$('select.variaciones').each(function() {
+				if ($(this).val()) {
+					variaciones.push($(this).val());
+				}
+			});
+			variaciones.sort(function(a, b){return a - b});
+			variaciones = variaciones.join();
+			
+			var url = "../../../../resources/library/AJAX.php?act=actualizarCodigoArticulo";
+			$.post(url, {"modeloConMecanismo": modeloConMecanismo, "variaciones": variaciones}, function(codigo) {
+				$('input.codigo-articulo').val(codigo);
+			});
+			
+			
 		}
 		//actualizarResultado();
 		
-		
+		$('form.codigo-articulo').submit(function(event) {
+			event.preventDefault();
+			var codigo = $('input.codigo-articulo').val();
+			
+			var variaciones = [];
+			$('select.variaciones').each(function() {
+				if ($(this).val()) {
+					variaciones.push($(this).val());
+				}
+			});
+			variaciones.sort(function(a, b){return a - b});
+			variaciones = variaciones.join();
+			var modeloConMecanismo = $('select.preview.mecanismo').val(); 
+			var url = "../../../../resources/library/AJAX.php?act=guardarCodigoArticulo";
+			$.post(url, {'variaciones': variaciones, 'modeloConMecanismo': modeloConMecanismo, 'codigo': codigo}, function(data) {
+			});
+		});
 		
 		$( "div.tabs" ).tabs();
 		

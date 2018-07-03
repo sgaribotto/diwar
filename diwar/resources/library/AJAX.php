@@ -1911,8 +1911,10 @@
 						$detalle .= $row['desc_modelo'] . " ";
 						$detalle .= $row['desc_mecanismo'] . " ";
 						
-						$variaciones = "(" . $_REQUEST['variaciones'] . ")";
 						
+						$variaciones = "(" . $_REQUEST['variaciones'] . ")";
+					
+						//print_r($_REQUEST);
 						$query = "SELECT v.tipo, v.descripcion, v.precio
 									FROM variaciones AS v
 									WHERE id IN {$variaciones}";
@@ -1931,7 +1933,37 @@
 						echo "<p class='resultado'><b>Descripción: </b>{$detalle}</p>";
 						echo "<p class='resultado'><b>Precio: </b>{$precio} <img class='imagen' src='{$imagen}' height='120'  /></p>";
 						//echo "";
+						
+						
 						break;
+						
+				case "actualizarCodigoArticulo":
+					$variaciones = $mysqli->real_escape_string($_REQUEST['variaciones']);
+					$modeloConMecanismo = $mysqli->real_escape_string($_REQUEST['modeloConMecanismo']);
+					
+					$query = "SELECT codigo
+								FROM codigos_de_articulo
+								WHERE modelo_con_mecanismo = {$modeloConMecanismo}
+									AND variaciones = '{$variaciones}'";
+					$result = $mysqli->query($query);
+					$row = $result->fetch_array(MYSQLI_ASSOC);
+					echo $row['codigo'];
+					break;
+					
+				case "guardarCodigoArticulo":
+					$variaciones = $mysqli->real_escape_string($_REQUEST['variaciones']);
+					$modeloConMecanismo = $mysqli->real_escape_string($_REQUEST['modeloConMecanismo']);
+					$codigo = $mysqli->real_escape_string($_REQUEST['codigo']);
+					
+					$query = "REPLACE INTO codigos_de_articulo
+								SET modelo_con_mecanismo = {$modeloConMecanismo},
+								variaciones = '{$variaciones}',
+								codigo = '{$codigo}'";
+					$mysqli->query($query);
+					if ($mysqli->error) {
+						echo $mysqli->error;
+					}
+					break;
 					
 				default:
 					echo "No se realizó la búsqueda";
